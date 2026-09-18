@@ -8,13 +8,90 @@
     <p class="error-banner">{{ error() }}</p>
   }
 
+  @if (!loading() && productos().length > 0) {
+    <div class="toolbar">
+      <div class="search-wrap">
+        <span class="search-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="18" height="18">
+            <path
+              fill="currentColor"
+              d="M15.5 14h-.79l-.28-.27A6.47 6.47 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"
+            />
+          </svg>
+        </span>
+        <input
+          type="search"
+          class="search-input"
+          placeholder="Buscar producto…"
+          [ngModel]="searchQuery()"
+          (ngModelChange)="onSearchChange($event)"
+          name="buscarProducto"
+          autocomplete="off"
+          aria-label="Buscar producto"
+        />
+      </div>
+      <label class="pager-size">
+        Filas
+        <select
+          [ngModel]="pageSize()"
+          (ngModelChange)="setPageSize($event)"
+          name="pageSize"
+          aria-label="Filas por página"
+        >
+          @for (opt of pageSizeOptions; track opt) {
+            <option [ngValue]="opt">{{ opt }}</option>
+          }
+        </select>
+      </label>
+    </div>
+  }
+
   @if (loading()) {
     <p class="muted">Cargando…</p>
   } @else if (productos().length === 0) {
     <p class="muted empty">No hay productos. Toca + para agregar uno.</p>
+  } @else if (productosFiltrados().length === 0) {
+    <p class="muted empty">No hay resultados para “{{ searchQuery() }}”.</p>
   } @else {
+    <div class="pager pager-top">
+      <p class="pager-info">
+        Mostrando {{ from() }}–{{ to() }} de {{ productosFiltrados().length }}
+      </p>
+      <div class="pager-controls">
+        <button
+          type="button"
+          class="pager-btn"
+          (click)="prevPage()"
+          [disabled]="page() <= 1"
+          aria-label="Anterior"
+        >
+          Anterior
+        </button>
+        @for (p of pages(); track p) {
+          <button
+            type="button"
+            class="pager-btn page-num"
+            [class.active]="p === page()"
+            (click)="goToPage(p)"
+            [attr.aria-current]="p === page() ? 'page' : null"
+          >
+            {{ p }}
+          </button>
+        }
+        <button
+          type="button"
+          class="pager-btn"
+          (click)="nextPage()"
+          [disabled]="page() >= totalPages()"
+          aria-label="Siguiente"
+        >
+          Siguiente
+        </button>
+      </div>
+    </div>
+
     <div class="list">
-      @for (producto of productos(); track producto.id) {
+      @for (producto of productosPagina(); track producto.id) {
         <div class="row">
           <div class="row-main">
             <span class="row-title">{{ producto.nombre }}</span>
@@ -38,6 +115,43 @@
           </div>
         </div>
       }
+    </div>
+
+    <div class="pager pager-bottom">
+      <p class="pager-info">
+        Mostrando {{ from() }}–{{ to() }} de {{ productosFiltrados().length }}
+      </p>
+      <div class="pager-controls">
+        <button
+          type="button"
+          class="pager-btn"
+          (click)="prevPage()"
+          [disabled]="page() <= 1"
+          aria-label="Anterior"
+        >
+          Anterior
+        </button>
+        @for (p of pages(); track p) {
+          <button
+            type="button"
+            class="pager-btn page-num"
+            [class.active]="p === page()"
+            (click)="goToPage(p)"
+            [attr.aria-current]="p === page() ? 'page' : null"
+          >
+            {{ p }}
+          </button>
+        }
+        <button
+          type="button"
+          class="pager-btn"
+          (click)="nextPage()"
+          [disabled]="page() >= totalPages()"
+          aria-label="Siguiente"
+        >
+          Siguiente
+        </button>
+      </div>
     </div>
   }
 

@@ -1,4 +1,4 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit, computed, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { Producto } from '../../models/models';
@@ -22,6 +22,59 @@ export class ProductosComponent implements OnInit {
   deletingId = signal<string | null>(null);
   saving = signal(false);
 
+  page = signal(1);
+  pageSize = signal(10);
+  searchQuery = signal('');
+  readonly pageSizeOptions = [5, 10, 25];
+
+  readonly productosFiltrados = computed(() => {
+    const q = this.searchQuery().trim().toLocaleLowerCase('es');
+    if (!q) return this.productos();
+    return this.productos().filter((p) =>
+      p.nombre.toLocaleLowerCase('es').includes(q)
+    );
+  });
+
+  readonly totalPages = computed(() => {
+    const total = this.productosFiltrados().length;
+    const size = this.pageSize();
+    return Math.max(1, Math.ceil(total / size) || 1);
+  });
+
+  readonly from = computed(() => {
+    const total = this.productosFiltrados().length;
+    if (total === 0) return 0;
+    return (this.page() - 1) * this.pageSize() + 1;
+  });
+
+  readonly to = computed(() => {
+    const total = this.productosFiltrados().length;
+    if (total === 0) return 0;
+    return Math.min(this.page() * this.pageSize(), total);
+  });
+
+  readonly productosPagina = computed(() => {
+    const size = this.pageSize();
+    const start = (this.page() - 1) * size;
+    return this.productosFiltrados().slice(start, start + size);
+  });
+
+  /** Números de página visibles (máx. 5 alrededor de la actual). */
+  readonly pages = computed(() => {
+    const total = this.totalPages();
+    const current = this.page();
+    const windowSize = 5;
+    let start = Math.max(1, current - Math.floor(windowSize / 2));
+    let end = start + windowSize - 1;
+    if (end > total) {
+      end = total;
+      start = Math.max(1, end - windowSize + 1);
+    }
+    const list: number[] = [];
+    for (let i = start; i <= end; i++) list.push(i);
+    return list;
+  });
+
   constructor(private productosService: ProductosService) {}
 
   async ngOnInit(): Promise<void> {
@@ -33,11 +86,43 @@ export class ProductosComponent implements OnInit {
     this.error.set(null);
     try {
       this.productos.set(await this.productosService.list());
+      this.clampPage();
     } catch (e) {
       this.error.set(toSpanishError(e, 'Error al cargar'));
     } finally {
       this.loading.set(false);
     }
+  }
+
+  onSearchChange(value: string): void {
+    this.searchQuery.set(value);
+    this.page.set(1);
+  }
+
+  setPageSize(size: number | string): void {
+    const n = Number(size);
+    if (!this.pageSizeOptions.includes(n)) return;
+    this.pageSize.set(n);
+    this.page.set(1);
+  }
+
+  goToPage(p: number): void {
+    if (p < 1 || p > this.totalPages()) return;
+    this.page.set(p);
+  }
+
+  prevPage(): void {
+    this.goToPage(this.page() - 1);
+  }
+
+  nextPage(): void {
+    this.goToPage(this.page() + 1);
+  }
+
+  private clampPage(): void {
+    const max = this.totalPages();
+    if (this.page() > max) this.page.set(max);
+    if (this.page() < 1) this.page.set(1);
   }
 
   openAdd(): void {
@@ -99,6 +184,7 @@ export class ProductosComponent implements OnInit {
           )
         );
       }
+      this.clampPage();
       this.closeForm();
     } catch (e) {
       this.error.set(toSpanishError(e, 'Error al guardar'));
@@ -115,6 +201,7 @@ export class ProductosComponent implements OnInit {
     try {
       await this.productosService.remove(producto.id);
       this.productos.update((list) => list.filter((p) => p.id !== producto.id));
+      this.clampPage();
     } catch (e) {
       this.error.set(toSpanishError(e, 'Error al eliminar'));
     } finally {

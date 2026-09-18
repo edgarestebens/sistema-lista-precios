@@ -23,6 +23,14 @@ describe('ProductosComponent', () => {
     },
   ];
 
+  function manyProductos(count: number): Producto[] {
+    return Array.from({ length: count }, (_, i) => ({
+      id: `p${i + 1}`,
+      nombre: `Producto ${String(i + 1).padStart(2, '0')}`,
+      created_at: '2026-01-01T00:00:00Z',
+    }));
+  }
+
   beforeEach(async () => {
     productosService = jasmine.createSpyObj<ProductosService>('ProductosService', [
       'list',
@@ -62,6 +70,62 @@ describe('ProductosComponent', () => {
     const text = fixture.nativeElement.textContent as string;
     expect(text).toContain('Leche');
     expect(text).toContain('Arroz');
+  });
+
+  it('productosPagina() hace slice según pageSize', async () => {
+    productosService.list.and.resolveTo(manyProductos(12));
+    fixture.detectChanges();
+    await fixture.whenStable();
+    component.setPageSize(5);
+    expect(component.productosPagina().length).toBe(5);
+    expect(component.from()).toBe(1);
+    expect(component.to()).toBe(5);
+    expect(component.totalPages()).toBe(3);
+    component.nextPage();
+    expect(component.page()).toBe(2);
+    expect(component.productosPagina()[0].nombre).toBe('Producto 06');
+    expect(component.from()).toBe(6);
+    expect(component.to()).toBe(10);
+  });
+
+  it('setPageSize() vuelve a la página 1', async () => {
+    productosService.list.and.resolveTo(manyProductos(20));
+    fixture.detectChanges();
+    await fixture.whenStable();
+    component.goToPage(2);
+    component.setPageSize(25);
+    expect(component.page()).toBe(1);
+    expect(component.pageSize()).toBe(25);
+  });
+
+  it('onSearchChange() filtra por nombre y reinicia página', async () => {
+    productosService.list.and.resolveTo([
+      ...productos,
+      { id: 'p3', nombre: 'Pan', created_at: '2026-01-01T00:00:00Z' },
+    ]);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    component.goToPage(1);
+    component.onSearchChange('pan');
+    expect(component.page()).toBe(1);
+    expect(component.productosFiltrados().map((p) => p.nombre)).toEqual(['Pan']);
+    expect(component.productosPagina().length).toBe(1);
+  });
+
+  it('al borrar el último de una página retrocede', async () => {
+    const list = manyProductos(6);
+    productosService.list.and.resolveTo(list);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    component.setPageSize(5);
+    component.goToPage(2);
+    expect(component.productosPagina().length).toBe(1);
+    spyOn(window, 'confirm').and.returnValue(true);
+    productosService.remove.and.resolveTo();
+    await component.deleteProducto(new Event('click'), list[5]);
+    expect(component.productos().length).toBe(5);
+    expect(component.page()).toBe(1);
+    expect(component.totalPages()).toBe(1);
   });
 
   it('saveProducto() agrega y cierra el modal', async () => {
