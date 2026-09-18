@@ -33,7 +33,7 @@
   @if (loading()) {
     <p class="muted">Cargando…</p>
   } @else if (items().length === 0) {
-    <p class="muted empty">Sin ítems. Escribe abajo para agregar.</p>
+    <p class="muted empty">Sin ítems. Elige un producto abajo para agregar.</p>
   } @else {
     <div class="select-all" (click)="toggleAll()">
       <button
@@ -84,15 +84,8 @@
           </button>
 
           <div class="row-main">
-            <span class="row-title" [class.struck]="item.is_checked">{{ item.name }}</span>
+            <span class="row-title" [class.struck]="item.is_checked">{{ item.nombre }}</span>
             <div class="row-actions">
-              <button
-                type="button"
-                class="action-btn"
-                (click)="openEdit($event, item)"
-              >
-                Editar
-              </button>
               <button
                 type="button"
                 class="action-btn danger"
@@ -119,48 +112,32 @@
   }
 
   <form class="composer" (submit)="$event.preventDefault(); addItem()">
-    <input
-      type="text"
-      [(ngModel)]="newName"
-      name="newItem"
-      placeholder="Nuevo ítem"
-      autocomplete="off"
-      [disabled]="adding()"
-    />
+    <select
+      [(ngModel)]="selectedProductoId"
+      name="newProducto"
+      [disabled]="adding() || productosDisponibles().length === 0"
+      aria-label="Producto"
+    >
+      <option value="">
+        @if (productos().length === 0) {
+          Sin productos — créalos en Productos
+        } @else if (productosDisponibles().length === 0) {
+          Todos los productos ya están en la lista
+        } @else {
+          Elegir producto…
+        }
+      </option>
+      @for (p of productosDisponibles(); track p.id) {
+        <option [value]="p.id">{{ p.nombre }}</option>
+      }
+    </select>
     <button
       type="submit"
       class="add-btn"
       aria-label="Agregar ítem"
-      [disabled]="adding() || !newName.trim()"
+      [disabled]="adding() || !selectedProductoId"
     >
       +
     </button>
   </form>
-
-  @if (showEdit()) {
-    <div class="modal-backdrop" (click)="closeEdit()">
-      <div class="modal" (click)="$event.stopPropagation()">
-        <h2>Editar ítem</h2>
-        <input
-          type="text"
-          [(ngModel)]="editName"
-          name="editItem"
-          placeholder="Nombre"
-          autofocus
-          (keyup.enter)="saveEdit()"
-        />
-        <div class="modal-actions">
-          <button type="button" class="btn ghost" (click)="closeEdit()">Cancelar</button>
-          <button
-            type="button"
-            class="btn primary"
-            (click)="saveEdit()"
-            [disabled]="savingEdit() || !editName.trim()"
-          >
-            Guardar
-          </button>
-        </div>
-      </div>
-    </div>
-  }
 </div>

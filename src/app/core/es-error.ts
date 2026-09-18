@@ -47,6 +47,13 @@ export function toSpanishError(
   if (m.includes('duplicate key') || m.includes('unique constraint')) {
     return 'Ese registro ya existe.';
   }
+  if (
+    m.includes('foreign key') ||
+    m.includes('violates foreign key') ||
+    m.includes('is still referenced')
+  ) {
+    return 'No se puede eliminar: el producto está en uso en alguna lista.';
+  }
   if (m.includes('user_id required') || m.includes('not authenticated')) {
     return 'Debes iniciar sesión para continuar.';
   }

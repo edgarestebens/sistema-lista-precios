@@ -27,6 +27,7 @@ export class MarketsComponent implements OnInit {
   editingId = signal<string | null>(null);
   deletingId = signal<string | null>(null);
   saving = signal(false);
+  showMenu = signal(false);
 
   constructor(
     private marketsService: MarketsService,
@@ -36,6 +37,20 @@ export class MarketsComponent implements OnInit {
 
   async ngOnInit(): Promise<void> {
     await this.load();
+  }
+
+  toggleMenu(event?: Event): void {
+    event?.stopPropagation();
+    this.showMenu.update((open) => !open);
+  }
+
+  closeMenu(): void {
+    this.showMenu.set(false);
+  }
+
+  goProductos(): void {
+    this.closeMenu();
+    void this.router.navigate(['/productos']);
   }
 
   async logout(): Promise<void> {

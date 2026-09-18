@@ -295,7 +295,8 @@
   box-sizing: border-box;
 }
 
-.composer input {
+.composer input,
+.composer select {
   flex: 1;
   min-width: 0;
   background: #1a1a1a;
@@ -306,13 +307,26 @@
   font-size: 1rem;
 }
 
-.composer input:focus {
+.composer input:focus,
+.composer select:focus {
   outline: none;
   border-color: #555;
 }
 
-.composer input:disabled {
+.composer input:disabled,
+.composer select:disabled {
   opacity: 0.6;
+}
+
+.modal select {
+  width: 100%;
+  box-sizing: border-box;
+  background: #121212;
+  border: 1px solid #333;
+  border-radius: 8px;
+  color: #fff;
+  padding: 0.85rem 0.9rem;
+  font-size: 1rem;
 }
 
 .add-btn {

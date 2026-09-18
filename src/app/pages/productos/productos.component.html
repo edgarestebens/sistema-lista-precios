@@ -1,0 +1,74 @@
+<div class="screen">
+  <header class="screen-header">
+    <a routerLink="/" class="back" aria-label="Volver">‹</a>
+    <h1>Productos</h1>
+  </header>
+
+  @if (error()) {
+    <p class="error-banner">{{ error() }}</p>
+  }
+
+  @if (loading()) {
+    <p class="muted">Cargando…</p>
+  } @else if (productos().length === 0) {
+    <p class="muted empty">No hay productos. Toca + para agregar uno.</p>
+  } @else {
+    <div class="list">
+      @for (producto of productos(); track producto.id) {
+        <div class="row">
+          <div class="row-main">
+            <span class="row-title">{{ producto.nombre }}</span>
+            <div class="row-actions">
+              <button
+                type="button"
+                class="action-btn"
+                (click)="openEdit($event, producto)"
+              >
+                Editar
+              </button>
+              <button
+                type="button"
+                class="action-btn danger"
+                (click)="deleteProducto($event, producto)"
+                [disabled]="deletingId() === producto.id"
+              >
+                Eliminar
+              </button>
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+  }
+
+  <button type="button" class="fab" (click)="openAdd()" aria-label="Agregar producto">
+    +
+  </button>
+
+  @if (showForm()) {
+    <div class="modal-backdrop" (click)="closeForm()">
+      <div class="modal" (click)="$event.stopPropagation()">
+        <h2>{{ editingId() ? 'Editar producto' : 'Nuevo producto' }}</h2>
+        <input
+          type="text"
+          [(ngModel)]="formName"
+          name="productoNombre"
+          placeholder="Nombre"
+          autofocus
+          (keyup.enter)="saveProducto()"
+        />
+        <div class="modal-actions">
+          <button type="button" class="btn ghost" (click)="closeForm()">Cancelar</button>
+          <button
+            type="button"
+            class="btn primary"
+            (click)="saveProducto()"
+            [disabled]="saving() || !formName.trim()"
+          >
+            Guardar
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+</div>

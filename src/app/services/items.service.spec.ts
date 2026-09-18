@@ -8,11 +8,33 @@ describe('ItemsService', () => {
   let service: ItemsService;
   let fromSpy: jasmine.Spy;
 
+  const sampleRows = [
+    {
+      id: 'i1',
+      market_id: 'm1',
+      producto_id: 'p1',
+      is_checked: false,
+      position: 0,
+      created_at: '2026-01-01T00:00:00Z',
+      producto: { nombre: 'Leche' },
+    },
+    {
+      id: 'i2',
+      market_id: 'm1',
+      producto_id: 'p2',
+      is_checked: true,
+      position: 1,
+      created_at: '2026-01-01T00:00:00Z',
+      producto: { nombre: 'Arroz' },
+    },
+  ];
+
   const sampleItems: Item[] = [
     {
       id: 'i1',
       market_id: 'm1',
-      name: 'Leche',
+      producto_id: 'p1',
+      nombre: 'Leche',
       is_checked: false,
       position: 0,
       created_at: '2026-01-01T00:00:00Z',
@@ -20,7 +42,8 @@ describe('ItemsService', () => {
     {
       id: 'i2',
       market_id: 'm1',
-      name: 'Arroz',
+      producto_id: 'p2',
+      nombre: 'Arroz',
       is_checked: true,
       position: 1,
       created_at: '2026-01-01T00:00:00Z',
@@ -29,7 +52,7 @@ describe('ItemsService', () => {
 
   beforeEach(() => {
     const supabase = createSupabaseMock(() =>
-      createQueryChain({ data: sampleItems, error: null })
+      createQueryChain({ data: sampleRows, error: null })
     );
     fromSpy = supabase.from;
 
@@ -39,27 +62,29 @@ describe('ItemsService', () => {
     service = TestBed.inject(ItemsService);
   });
 
-  it('listByMarket() filtra por market_id', async () => {
-    const chain = createQueryChain({ data: sampleItems, error: null });
+  it('listByMarket() filtra por market_id y mapea nombre', async () => {
+    const chain = createQueryChain({ data: sampleRows, error: null });
     fromSpy.and.returnValue(chain);
 
     const result = await service.listByMarket('m1');
     expect(fromSpy).toHaveBeenCalledWith('items');
+    expect(chain.select).toHaveBeenCalledWith('*, producto:producto_id(nombre)');
     expect(chain.eq).toHaveBeenCalledWith('market_id', 'm1');
-    expect(result.length).toBe(2);
+    expect(result).toEqual(sampleItems);
   });
 
-  it('create() inserta ítem sin tachar y con trim', async () => {
+  it('create() inserta con producto_id', async () => {
     let insertPayload: unknown;
     fromSpy.and.callFake(() => {
       const chain = createQueryChain({
         data: {
           id: 'i3',
           market_id: 'm1',
-          name: 'Pan',
+          producto_id: 'p3',
           is_checked: false,
           position: 2,
           created_at: '2026-01-02T00:00:00Z',
+          producto: { nombre: 'Pan' },
         },
         error: null,
       });
@@ -68,19 +93,20 @@ describe('ItemsService', () => {
         return chain;
       });
       chain.order.and.returnValue(
-        Promise.resolve({ data: sampleItems, error: null })
+        Promise.resolve({ data: sampleRows, error: null })
       );
       return chain;
     });
 
-    const item = await service.create('m1', '  Pan  ');
+    const item = await service.create('m1', 'p3');
     expect(insertPayload).toEqual({
       market_id: 'm1',
-      name: 'Pan',
+      producto_id: 'p3',
       position: 2,
       is_checked: false,
     });
-    expect(item.name).toBe('Pan');
+    expect(item.nombre).toBe('Pan');
+    expect(item.producto_id).toBe('p3');
   });
 
   it('toggleChecked() actualiza is_checked', async () => {

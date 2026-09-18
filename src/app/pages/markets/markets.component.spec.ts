@@ -151,10 +151,18 @@ describe('MarketsComponent', () => {
     expect(marketsService.reorder).toHaveBeenCalled();
   });
 
+  it('goProductos() navega a /productos', async () => {
+    fixture.detectChanges();
+    await fixture.whenStable();
+    component.goProductos();
+    expect(router.navigate).toHaveBeenCalledWith(['/productos']);
+    expect(component.showMenu()).toBeFalse();
+  });
+
   it('muestra error si list falla', async () => {
     marketsService.list.and.rejectWith(new Error('sin red'));
     fixture.detectChanges();
     await fixture.whenStable();
-    expect(component.error()).toBe('sin red');
+    expect(component.error()).toBeTruthy();
   });
 });

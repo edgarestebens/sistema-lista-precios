@@ -1,7 +1,28 @@
 <div class="screen">
   <header class="screen-header">
     <h1 class="app-title">Lista de Mercado M y E</h1>
-    <button type="button" class="logout-btn" (click)="logout()">Salir</button>
+    <div class="header-actions">
+      <div class="menu-wrap">
+        <button
+          type="button"
+          class="menu-btn"
+          (click)="toggleMenu($event)"
+          aria-label="Menú"
+          [attr.aria-expanded]="showMenu()"
+        >
+          ⋮
+        </button>
+        @if (showMenu()) {
+          <div class="menu-backdrop" (click)="closeMenu()"></div>
+          <div class="menu-panel" role="menu">
+            <button type="button" role="menuitem" (click)="goProductos()">
+              Productos
+            </button>
+          </div>
+        }
+      </div>
+      <button type="button" class="logout-btn" (click)="logout()">Salir</button>
+    </div>
   </header>
 
   @if (error()) {

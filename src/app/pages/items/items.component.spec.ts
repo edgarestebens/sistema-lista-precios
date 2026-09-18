@@ -1,8 +1,9 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap, provideRouter, Router } from '@angular/router';
-import { Item, Market } from '../../models/models';
+import { Item, Market, Producto } from '../../models/models';
 import { ItemsService } from '../../services/items.service';
 import { MarketsService } from '../../services/markets.service';
+import { ProductosService } from '../../services/productos.service';
 import { ItemsComponent } from './items.component';
 
 describe('ItemsComponent', () => {
@@ -10,6 +11,7 @@ describe('ItemsComponent', () => {
   let component: ItemsComponent;
   let itemsService: jasmine.SpyObj<ItemsService>;
   let marketsService: jasmine.SpyObj<MarketsService>;
+  let productosService: jasmine.SpyObj<ProductosService>;
   let router: Router;
 
   const market: Market = {
@@ -19,11 +21,18 @@ describe('ItemsComponent', () => {
     created_at: '2026-01-01T00:00:00Z',
   };
 
+  const productos: Producto[] = [
+    { id: 'p1', nombre: 'Leche', created_at: '2026-01-01T00:00:00Z' },
+    { id: 'p2', nombre: 'Arroz', created_at: '2026-01-01T00:00:00Z' },
+    { id: 'p3', nombre: 'Pan', created_at: '2026-01-01T00:00:00Z' },
+  ];
+
   const items: Item[] = [
     {
       id: 'i1',
       market_id: 'm1',
-      name: 'Leche',
+      producto_id: 'p1',
+      nombre: 'Leche',
       is_checked: false,
       position: 0,
       created_at: '2026-01-01T00:00:00Z',
@@ -31,7 +40,8 @@ describe('ItemsComponent', () => {
     {
       id: 'i2',
       market_id: 'm1',
-      name: 'Arroz',
+      producto_id: 'p2',
+      nombre: 'Arroz',
       is_checked: true,
       position: 1,
       created_at: '2026-01-01T00:00:00Z',
@@ -42,7 +52,6 @@ describe('ItemsComponent', () => {
     itemsService = jasmine.createSpyObj<ItemsService>('ItemsService', [
       'listByMarket',
       'create',
-      'rename',
       'remove',
       'toggleChecked',
       'reorder',
@@ -50,9 +59,13 @@ describe('ItemsComponent', () => {
     marketsService = jasmine.createSpyObj<MarketsService>('MarketsService', [
       'getById',
     ]);
+    productosService = jasmine.createSpyObj<ProductosService>('ProductosService', [
+      'list',
+    ]);
 
     marketsService.getById.and.resolveTo(market);
     itemsService.listByMarket.and.resolveTo(items);
+    productosService.list.and.resolveTo(productos);
 
     await TestBed.configureTestingModule({
       imports: [ItemsComponent],
@@ -60,6 +73,7 @@ describe('ItemsComponent', () => {
         provideRouter([]),
         { provide: ItemsService, useValue: itemsService },
         { provide: MarketsService, useValue: marketsService },
+        { provide: ProductosService, useValue: productosService },
         {
           provide: ActivatedRoute,
           useValue: {
@@ -76,13 +90,15 @@ describe('ItemsComponent', () => {
     component = fixture.componentInstance;
   });
 
-  it('carga mercado e ítems al iniciar', async () => {
+  it('carga mercado, ítems y productos al iniciar', async () => {
     fixture.detectChanges();
     await fixture.whenStable();
     expect(marketsService.getById).toHaveBeenCalledWith('m1');
     expect(itemsService.listByMarket).toHaveBeenCalledWith('m1');
+    expect(productosService.list).toHaveBeenCalled();
     expect(component.market()?.name).toBe('Mercado');
     expect(component.items().length).toBe(2);
+    expect(component.productos().length).toBe(3);
   });
 
   it('renderiza ítems y título', async () => {
@@ -95,24 +111,25 @@ describe('ItemsComponent', () => {
     expect(text).toContain('Arroz');
   });
 
-  it('addItem() agrega y limpia el input', async () => {
+  it('addItem() agrega con producto_id y limpia el select', async () => {
     fixture.detectChanges();
     await fixture.whenStable();
     const created: Item = {
       id: 'i3',
       market_id: 'm1',
-      name: 'Pan',
+      producto_id: 'p3',
+      nombre: 'Pan',
       is_checked: false,
       position: 2,
       created_at: '2026-01-02T00:00:00Z',
     };
     itemsService.create.and.resolveTo(created);
     itemsService.reorder.and.resolveTo();
-    component.newName = 'Pan';
+    component.selectedProductoId = 'p3';
     await component.addItem();
-    expect(itemsService.create).toHaveBeenCalledWith('m1', 'Pan');
+    expect(itemsService.create).toHaveBeenCalledWith('m1', 'p3');
     expect(component.items().some((i) => i.id === 'i3')).toBeTrue();
-    expect(component.newName).toBe('');
+    expect(component.selectedProductoId).toBe('');
     expect(itemsService.reorder).toHaveBeenCalled();
   });
 
@@ -121,7 +138,6 @@ describe('ItemsComponent', () => {
     await fixture.whenStable();
     itemsService.toggleChecked.and.resolveTo();
     itemsService.reorder.and.resolveTo();
-    // Lista inicial: Leche (pending), Arroz (ya checked)
     await component.toggle(items[0]);
     expect(itemsService.toggleChecked).toHaveBeenCalledWith('i1', true);
     const list = component.items();
@@ -135,7 +151,7 @@ describe('ItemsComponent', () => {
     await fixture.whenStable();
     itemsService.toggleChecked.and.resolveTo();
     itemsService.reorder.and.resolveTo();
-    await component.toggle(items[1]); // Arroz estaba checked
+    await component.toggle(items[1]);
     const list = component.items();
     expect(list.find((i) => i.id === 'i2')?.is_checked).toBeFalse();
     expect(list[list.length - 1].is_checked).toBeFalse();
@@ -196,18 +212,10 @@ describe('ItemsComponent', () => {
     expect(router.navigate).toHaveBeenCalledWith(['/']);
   });
 
-  it('saveEdit() renombra el ítem', async () => {
+  it('productosDisponibles() oculta productos ya agregados', async () => {
     fixture.detectChanges();
     await fixture.whenStable();
-    itemsService.rename.and.resolveTo();
-    component.openEdit(new Event('click'), items[0]);
-    component.editName = 'Leche entera';
-    await component.saveEdit();
-    expect(itemsService.rename).toHaveBeenCalledWith('i1', 'Leche entera');
-    expect(component.items().find((i) => i.id === 'i1')?.name).toBe(
-      'Leche entera'
-    );
-    expect(component.showEdit()).toBeFalse();
+    expect(component.productosDisponibles().map((p) => p.id)).toEqual(['p3']);
   });
 
   it('muestra Seleccionar todo en el template', async () => {
@@ -222,7 +230,8 @@ describe('ItemsComponent', () => {
       {
         id: 'i1',
         market_id: 'm1',
-        name: 'Zapallo',
+        producto_id: 'p1',
+        nombre: 'Zapallo',
         is_checked: false,
         position: 0,
         created_at: '2026-01-01T00:00:00Z',
@@ -230,7 +239,8 @@ describe('ItemsComponent', () => {
       {
         id: 'i2',
         market_id: 'm1',
-        name: 'Arroz',
+        producto_id: 'p2',
+        nombre: 'Arroz',
         is_checked: false,
         position: 1,
         created_at: '2026-01-01T00:00:00Z',
@@ -238,7 +248,8 @@ describe('ItemsComponent', () => {
       {
         id: 'i3',
         market_id: 'm1',
-        name: 'Leche',
+        producto_id: 'p3',
+        nombre: 'Leche',
         is_checked: true,
         position: 2,
         created_at: '2026-01-01T00:00:00Z',
@@ -248,7 +259,7 @@ describe('ItemsComponent', () => {
     await fixture.whenStable();
     itemsService.reorder.and.resolveTo();
     await component.sortAlphabetically('asc');
-    expect(component.items().map((i) => i.name)).toEqual([
+    expect(component.items().map((i) => i.nombre)).toEqual([
       'Arroz',
       'Zapallo',
       'Leche',

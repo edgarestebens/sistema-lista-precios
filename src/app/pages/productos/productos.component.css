@@ -18,8 +18,25 @@
   padding: 0.75rem 0.25rem 1.25rem;
 }
 
-.screen-header h1,
-.app-title {
+.back {
+  width: 2.25rem;
+  height: 2.25rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  color: #fff;
+  font-size: 1.75rem;
+  line-height: 1;
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+
+.back:hover {
+  background: #222;
+}
+
+.screen-header h1 {
   margin: 0;
   font-size: 1.45rem;
   font-weight: 800;
@@ -27,86 +44,6 @@
   color: #ffffff;
   flex: 1;
   min-width: 0;
-}
-
-.header-actions {
-  display: flex;
-  align-items: center;
-  gap: 0.35rem;
-  flex-shrink: 0;
-}
-
-.menu-wrap {
-  position: relative;
-}
-
-.menu-btn {
-  width: 2.25rem;
-  height: 2.25rem;
-  border: none;
-  background: transparent;
-  color: #fff;
-  font-size: 1.35rem;
-  line-height: 1;
-  cursor: pointer;
-  border-radius: 8px;
-}
-
-.menu-btn:hover {
-  background: #222;
-}
-
-.menu-backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 40;
-}
-
-.menu-panel {
-  position: absolute;
-  top: 100%;
-  right: 0;
-  margin-top: 0.25rem;
-  min-width: 11rem;
-  background: #1c1c1c;
-  border: 1px solid #333;
-  border-radius: 10px;
-  padding: 0.35rem;
-  z-index: 50;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
-}
-
-.menu-panel button {
-  display: block;
-  width: 100%;
-  border: none;
-  background: transparent;
-  color: #f0f0f0;
-  text-align: left;
-  padding: 0.7rem 0.85rem;
-  border-radius: 7px;
-  cursor: pointer;
-  font-size: 0.95rem;
-}
-
-.menu-panel button:hover {
-  background: #2a2a2a;
-}
-
-.logout-btn {
-  border: 1px solid #333;
-  background: transparent;
-  color: var(--text-muted);
-  border-radius: 8px;
-  padding: 0.45rem 0.7rem;
-  font-size: 0.85rem;
-  cursor: pointer;
-  flex-shrink: 0;
-}
-
-.logout-btn:hover {
-  color: #fff;
-  border-color: #555;
 }
 
 .muted {
@@ -141,13 +78,6 @@
   background: var(--row-bg);
   border-radius: 6px;
   padding: 0.95rem 0.85rem;
-  cursor: pointer;
-  user-select: none;
-  touch-action: none;
-}
-
-.row:active {
-  background: #2a2a2a;
 }
 
 .row-main {
@@ -165,20 +95,6 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-}
-
-.delete-btn {
-  background: transparent;
-  border: none;
-  color: var(--text-muted);
-  font-size: 0.85rem;
-  padding: 0.25rem 0.35rem;
-  cursor: pointer;
-  flex-shrink: 0;
-}
-
-.delete-btn:hover {
-  color: #e57373;
 }
 
 .row-actions {
@@ -203,47 +119,6 @@
 
 .action-btn.danger:hover {
   color: #e57373;
-}
-
-.drag-handle {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: 4px;
-  width: 28px;
-  height: 28px;
-  padding: 0;
-  border: none;
-  background: transparent;
-  cursor: grab;
-  flex-shrink: 0;
-}
-
-.drag-handle span {
-  display: block;
-  height: 2px;
-  width: 100%;
-  background: #cfcfcf;
-  border-radius: 1px;
-}
-
-.cdk-drag-preview {
-  box-sizing: border-box;
-  border-radius: 6px;
-  background: var(--row-bg);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
-}
-
-.cdk-drag-placeholder {
-  opacity: 0.35;
-}
-
-.cdk-drag-animating {
-  transition: transform 200ms ease;
-}
-
-.list.cdk-drop-list-dragging .row:not(.cdk-drag-placeholder) {
-  transition: transform 200ms ease;
 }
 
 .fab {

@@ -6,10 +6,11 @@ import {
   moveItemInArray,
 } from '@angular/cdk/drag-drop';
 import { FormsModule } from '@angular/forms';
-import { Item, Market } from '../../models/models';
+import { Item, Market, Producto } from '../../models/models';
 import { toSpanishError } from '../../core/es-error';
 import { ItemsService } from '../../services/items.service';
 import { MarketsService } from '../../services/markets.service';
+import { ProductosService } from '../../services/productos.service';
 
 @Component({
   selector: 'app-items',
@@ -21,14 +22,11 @@ import { MarketsService } from '../../services/markets.service';
 export class ItemsComponent implements OnInit {
   market = signal<Market | null>(null);
   items = signal<Item[]>([]);
+  productos = signal<Producto[]>([]);
   loading = signal(true);
   error = signal<string | null>(null);
-  newName = '';
-  editName = '';
+  selectedProductoId = '';
   deletingId = signal<string | null>(null);
-  editingId = signal<string | null>(null);
-  showEdit = signal(false);
-  savingEdit = signal(false);
   togglingAll = signal(false);
   showMenu = signal(false);
   adding = signal(false);
@@ -38,11 +36,18 @@ export class ItemsComponent implements OnInit {
     () => this.items().length > 0 && this.items().every((i) => i.is_checked)
   );
 
+  /** Productos que aún no están en esta lista (para el combo de agregar). */
+  readonly productosDisponibles = computed(() => {
+    const usados = new Set(this.items().map((i) => i.producto_id));
+    return this.productos().filter((p) => !usados.has(p.id));
+  });
+
   constructor(
     private route: ActivatedRoute,
     private router: Router,
     private itemsService: ItemsService,
-    private marketsService: MarketsService
+    private marketsService: MarketsService,
+    private productosService: ProductosService
   ) {}
 
   async ngOnInit(): Promise<void> {
@@ -64,7 +69,12 @@ export class ItemsComponent implements OnInit {
         return;
       }
       this.market.set(market);
-      this.items.set(await this.itemsService.listByMarket(this.marketId));
+      const [items, productos] = await Promise.all([
+        this.itemsService.listByMarket(this.marketId),
+        this.productosService.list(),
+      ]);
+      this.items.set(items);
+      this.productos.set(productos);
     } catch (e) {
       this.error.set(toSpanishError(e, 'Error al cargar'));
     } finally {
@@ -73,17 +83,17 @@ export class ItemsComponent implements OnInit {
   }
 
   async addItem(): Promise<void> {
-    const name = this.newName.trim();
-    if (!name || this.adding()) return;
+    const productoId = this.selectedProductoId;
+    if (!productoId || this.adding()) return;
     this.adding.set(true);
     try {
-      const item = await this.itemsService.create(this.marketId, name);
+      const item = await this.itemsService.create(this.marketId, productoId);
       this.items.update((list) => {
         const pending = list.filter((i) => !i.is_checked);
         const done = list.filter((i) => i.is_checked);
         return [...pending, item, ...done];
       });
-      this.newName = '';
+      this.selectedProductoId = '';
       await this.itemsService.reorder(this.items());
     } catch (e) {
       this.error.set(toSpanishError(e, 'Error al agregar'));
@@ -168,37 +178,6 @@ export class ItemsComponent implements OnInit {
     }
   }
 
-  openEdit(event: Event, item: Item): void {
-    event.stopPropagation();
-    this.editingId.set(item.id);
-    this.editName = item.name;
-    this.showEdit.set(true);
-  }
-
-  closeEdit(): void {
-    this.showEdit.set(false);
-    this.editingId.set(null);
-    this.editName = '';
-  }
-
-  async saveEdit(): Promise<void> {
-    const name = this.editName.trim();
-    const id = this.editingId();
-    if (!name || !id || this.savingEdit()) return;
-    this.savingEdit.set(true);
-    try {
-      await this.itemsService.rename(id, name);
-      this.items.update((list) =>
-        list.map((i) => (i.id === id ? { ...i, name } : i))
-      );
-      this.closeEdit();
-    } catch (e) {
-      this.error.set(toSpanishError(e, 'Error al editar'));
-    } finally {
-      this.savingEdit.set(false);
-    }
-  }
-
   async drop(event: CdkDragDrop<Item[]>): Promise<void> {
     if (event.previousIndex === event.currentIndex) return;
     const list = [...this.items()];
@@ -227,7 +206,7 @@ export class ItemsComponent implements OnInit {
 
     const factor = direction === 'asc' ? 1 : -1;
     const byName = (a: Item, b: Item) =>
-      factor * a.name.localeCompare(b.name, 'es', { sensitivity: 'base' });
+      factor * a.nombre.localeCompare(b.nombre, 'es', { sensitivity: 'base' });
 
     const pending = this.items()
       .filter((i) => !i.is_checked)
