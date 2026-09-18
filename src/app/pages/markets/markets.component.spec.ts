@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 import { Market } from '../../models/models';
+import { AuthService } from '../../services/auth.service';
 import { MarketsService } from '../../services/markets.service';
 import { MarketsComponent } from './markets.component';
 
@@ -8,6 +9,7 @@ describe('MarketsComponent', () => {
   let fixture: ComponentFixture<MarketsComponent>;
   let component: MarketsComponent;
   let marketsService: jasmine.SpyObj<MarketsService>;
+  let authService: jasmine.SpyObj<AuthService>;
   let router: Router;
 
   const markets: Market[] = [
@@ -34,17 +36,20 @@ describe('MarketsComponent', () => {
       'reorder',
     ]);
     marketsService.list.and.resolveTo(markets);
+    authService = jasmine.createSpyObj<AuthService>('AuthService', ['signOut']);
 
     await TestBed.configureTestingModule({
       imports: [MarketsComponent],
       providers: [
         provideRouter([]),
         { provide: MarketsService, useValue: marketsService },
+        { provide: AuthService, useValue: authService },
       ],
     }).compileComponents();
 
     router = TestBed.inject(Router);
     spyOn(router, 'navigate').and.resolveTo(true);
+    spyOn(router, 'navigateByUrl').and.resolveTo(true);
 
     fixture = TestBed.createComponent(MarketsComponent);
     component = fixture.componentInstance;

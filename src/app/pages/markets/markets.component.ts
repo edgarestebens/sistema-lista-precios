@@ -7,6 +7,7 @@ import {
 } from '@angular/cdk/drag-drop';
 import { FormsModule } from '@angular/forms';
 import { Market } from '../../models/models';
+import { AuthService } from '../../services/auth.service';
 import { MarketsService } from '../../services/markets.service';
 
 @Component({
@@ -28,11 +29,21 @@ export class MarketsComponent implements OnInit {
 
   constructor(
     private marketsService: MarketsService,
+    private auth: AuthService,
     private router: Router
   ) {}
 
   async ngOnInit(): Promise<void> {
     await this.load();
+  }
+
+  async logout(): Promise<void> {
+    try {
+      await this.auth.signOut();
+      await this.router.navigateByUrl('/login');
+    } catch (e) {
+      this.error.set(e instanceof Error ? e.message : 'Error al salir');
+    }
   }
 
   async load(): Promise<void> {

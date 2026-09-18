@@ -82,7 +82,18 @@ Hay pruebas unitarias de servicios y componentes (listas, ítems, tachar, ordena
 npx ng test --watch=false --browsers=Chrome
 ```
 
+## Autenticación
+
+- Login / registro con **email + contraseña** (Supabase Auth)
+- Reutiliza la tabla `profiles` del mismo proyecto Supabase
+- Cada usuario solo ve sus propias listas e ítems (RLS)
+- Botón **Salir** en la pantalla principal
+
+En el dashboard de Supabase → Authentication → URL Configuration, conviene poner:
+
+- Site URL: `https://edgarestebens.github.io/sistema-lista-precios`
+- Redirect URLs: esa misma y `http://localhost:4200/**`
+
 ## Notas
 
-- En esta versión **no hay login**: el acceso usa la clave `anon` de Supabase.
 - La app está optimizada para pantallas estrechas; también funciona en escritorio.

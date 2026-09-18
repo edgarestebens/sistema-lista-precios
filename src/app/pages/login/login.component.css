@@ -1,0 +1,112 @@
+:host {
+  display: block;
+  min-height: 100%;
+}
+
+.login-screen {
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.25rem;
+  background: radial-gradient(ellipse at top, #1a1010 0%, #000 55%);
+}
+
+.login-card {
+  width: 100%;
+  max-width: 400px;
+  background: #141414;
+  border: 1px solid #2a2a2a;
+  border-radius: 14px;
+  padding: 1.5rem 1.25rem 1.35rem;
+}
+
+.login-card h1 {
+  margin: 0;
+  font-size: 1.35rem;
+  font-weight: 800;
+  text-align: center;
+}
+
+.subtitle {
+  margin: 0.45rem 0 1.1rem;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.95rem;
+}
+
+.tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.35rem;
+  margin-bottom: 1rem;
+}
+
+.tabs button {
+  border: 1px solid #333;
+  background: #0f0f0f;
+  color: var(--text-muted);
+  border-radius: 8px;
+  padding: 0.6rem;
+  cursor: pointer;
+}
+
+.tabs button.active {
+  background: var(--fab);
+  border-color: var(--fab);
+  color: #fff;
+}
+
+.error-banner {
+  background: #3a1515;
+  color: #ffb4b4;
+  padding: 0.65rem 0.85rem;
+  border-radius: 8px;
+  margin: 0 0 0.85rem;
+  font-size: 0.9rem;
+}
+
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: 0.9rem;
+  color: #cfcfcf;
+}
+
+input {
+  background: #0a0a0a;
+  border: 1px solid #333;
+  border-radius: 8px;
+  color: #fff;
+  padding: 0.75rem 0.85rem;
+  font-size: 1rem;
+}
+
+input:focus {
+  outline: none;
+  border-color: #555;
+}
+
+.submit {
+  margin-top: 0.35rem;
+  border: none;
+  border-radius: 8px;
+  background: var(--fab);
+  color: #fff;
+  padding: 0.85rem 1rem;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.submit:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
