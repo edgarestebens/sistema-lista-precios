@@ -35,6 +35,7 @@ export class ComparativoPrecioComponent implements OnInit {
   page = signal(1);
   pageSize = signal(10);
   searchQuery = signal('');
+  filterMercadoId = signal('');
   readonly pageSizeOptions = [5, 10, 25];
 
   readonly productosDisponibles = computed(() => {
@@ -48,10 +49,14 @@ export class ComparativoPrecioComponent implements OnInit {
 
   readonly filasFiltradas = computed(() => {
     const q = this.searchQuery().trim().toLocaleLowerCase('es');
-    if (!q) return this.filas();
-    return this.filas().filter((f) =>
-      f.producto_nombre.toLocaleLowerCase('es').includes(q)
-    );
+    const mercadoId = this.filterMercadoId();
+    return this.filas().filter((f) => {
+      if (mercadoId && this.clasePrecio(f, mercadoId) !== 'barato') {
+        return false;
+      }
+      if (!q) return true;
+      return f.producto_nombre.toLocaleLowerCase('es').includes(q);
+    });
   });
 
   readonly totalPages = computed(() => {
@@ -125,6 +130,11 @@ export class ComparativoPrecioComponent implements OnInit {
 
   onSearchChange(value: string): void {
     this.searchQuery.set(value);
+    this.page.set(1);
+  }
+
+  onFilterMercadoChange(value: string): void {
+    this.filterMercadoId.set(value);
     this.page.set(1);
   }
 

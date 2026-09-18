@@ -183,4 +183,51 @@ describe('ComparativoPrecioComponent', () => {
     ]);
     expect(component.page()).toBe(1);
   });
+
+  it('filtro por mercado solo muestra productos baratos en ese mercado', async () => {
+    const varias: ComparativoProducto[] = [
+      {
+        producto_id: 'p1',
+        producto_nombre: 'Leche',
+        precios: { me1: 3000, me2: 2800 },
+      },
+      {
+        producto_id: 'p2',
+        producto_nombre: 'Arroz',
+        precios: { me1: 1500, me2: 2000 },
+      },
+      {
+        producto_id: 'p3',
+        producto_nombre: 'Pan',
+        precios: { me1: 0, me2: 1200 },
+      },
+    ];
+    comparativoService.listGrouped.and.resolveTo(varias);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    component.onFilterMercadoChange('me1');
+    expect(component.filasFiltradas().map((f) => f.producto_id)).toEqual([
+      'p2',
+    ]);
+    component.onFilterMercadoChange('me2');
+    expect(component.filasFiltradas().map((f) => f.producto_id)).toEqual([
+      'p1',
+      'p3',
+    ]);
+  });
+
+  it('filtro por mercado sin baratos deja la lista vacía', async () => {
+    const varias: ComparativoProducto[] = [
+      {
+        producto_id: 'p1',
+        producto_nombre: 'Leche',
+        precios: { me1: 3000, me2: 2800 },
+      },
+    ];
+    comparativoService.listGrouped.and.resolveTo(varias);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    component.onFilterMercadoChange('me1');
+    expect(component.filasFiltradas().length).toBe(0);
+  });
 });

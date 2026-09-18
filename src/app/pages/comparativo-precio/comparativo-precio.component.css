@@ -106,6 +106,7 @@
   color: var(--text-muted);
 }
 
+.toolbar .filter-mercado,
 .toolbar .pager-size {
   flex: 1 1 auto;
   margin: 0;
@@ -116,6 +117,7 @@
   color: var(--text-muted);
 }
 
+.toolbar .filter-mercado select,
 .toolbar .pager-size select {
   background: #1a1a1a;
   border: 1px solid #333;
@@ -131,6 +133,7 @@
     flex: 1 1 auto;
   }
 
+  .toolbar .filter-mercado,
   .toolbar .pager-size {
     flex: 0 0 auto;
   }

@@ -30,6 +30,20 @@
           aria-label="Buscar producto"
         />
       </div>
+      <label class="filter-mercado">
+        Mercado
+        <select
+          [ngModel]="filterMercadoId()"
+          (ngModelChange)="onFilterMercadoChange($event)"
+          name="filterMercado"
+          aria-label="Filtrar por mercado barato"
+        >
+          <option value="">Seleccione…</option>
+          @for (m of mercados(); track m.id) {
+            <option [value]="m.id">{{ m.nombre }}</option>
+          }
+        </select>
+      </label>
       <label class="pager-size">
         Filas
         <select
@@ -55,7 +69,13 @@
   } @else if (filas().length === 0) {
     <p class="muted empty">Sin comparativos. Toca + para agregar uno.</p>
   } @else if (filasFiltradas().length === 0) {
-    <p class="muted empty">No hay resultados para “{{ searchQuery() }}”.</p>
+    <p class="muted empty">
+      @if (filterMercadoId()) {
+        No hay productos baratos en ese mercado.
+      } @else {
+        No hay resultados para “{{ searchQuery() }}”.
+      }
+    </p>
   } @else {
     <div class="pager pager-top">
       <p class="pager-info">
