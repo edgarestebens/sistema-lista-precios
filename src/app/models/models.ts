@@ -9,6 +9,8 @@ export interface Market {
 export interface Producto {
   id: string;
   nombre: string;
+  market_id?: string | null;
+  lista_nombre?: string;
   user_id?: string;
   created_at: string;
 }

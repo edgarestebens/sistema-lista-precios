@@ -30,6 +30,21 @@
           aria-label="Buscar producto"
         />
       </div>
+      <label class="filter-lista">
+        Lista
+        <select
+          [ngModel]="filterMarketId()"
+          (ngModelChange)="onFilterListaChange($event)"
+          name="filterLista"
+          aria-label="Filtrar por lista"
+        >
+          <option value="">Seleccione…</option>
+          <option value="__none__">Sin lista</option>
+          @for (m of markets(); track m.id) {
+            <option [value]="m.id">{{ m.name }}</option>
+          }
+        </select>
+      </label>
       <label class="pager-size">
         Filas
         <select
@@ -94,7 +109,12 @@
       @for (producto of productosPagina(); track producto.id) {
         <div class="row">
           <div class="row-main">
-            <span class="row-title">{{ producto.nombre }}</span>
+            <div class="row-text">
+              <span class="row-title">{{ producto.nombre }}</span>
+              <span class="row-meta">
+                {{ producto.lista_nombre || 'Sin lista asignada' }}
+              </span>
+            </div>
             <div class="row-actions">
               <button
                 type="button"
@@ -163,7 +183,21 @@
     <div class="modal-backdrop" (click)="closeForm()">
       <div class="modal" (click)="$event.stopPropagation()">
         <h2>{{ editingId() ? 'Editar producto' : 'Nuevo producto' }}</h2>
+        <label class="form-label" for="listaSelect">Lista</label>
+        <select
+          id="listaSelect"
+          [(ngModel)]="formMarketId"
+          name="productoLista"
+          aria-label="Lista"
+        >
+          <option value="">Elegir lista…</option>
+          @for (m of markets(); track m.id) {
+            <option [value]="m.id">{{ m.name }}</option>
+          }
+        </select>
+        <label class="form-label" for="productoNombre">Nombre</label>
         <input
+          id="productoNombre"
           type="text"
           [(ngModel)]="formName"
           name="productoNombre"
@@ -177,7 +211,7 @@
             type="button"
             class="btn primary"
             (click)="saveProducto()"
-            [disabled]="saving() || !formName.trim()"
+            [disabled]="saving() || !formName.trim() || !formMarketId"
           >
             Guardar
           </button>

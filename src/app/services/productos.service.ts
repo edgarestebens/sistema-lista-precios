@@ -3,6 +3,10 @@ import { SupabaseClient } from '@supabase/supabase-js';
 import { SUPABASE_CLIENT } from '../core/supabase.client';
 import { Producto } from '../models/models';
 
+type ProductoRow = Producto & {
+  markets?: { name: string } | null;
+};
+
 @Injectable({ providedIn: 'root' })
 export class ProductosService {
   constructor(@Inject(SUPABASE_CLIENT) private readonly supabase: SupabaseClient) {}
@@ -10,28 +14,28 @@ export class ProductosService {
   async list(): Promise<Producto[]> {
     const { data, error } = await this.supabase
       .from('producto')
-      .select('*')
+      .select('*, markets:market_id(name)')
       .order('nombre', { ascending: true });
 
     if (error) throw error;
-    return data ?? [];
+    return ((data as ProductoRow[] | null) ?? []).map((row) => this.mapRow(row));
   }
 
-  async create(nombre: string): Promise<Producto> {
+  async create(nombre: string, marketId: string): Promise<Producto> {
     const { data, error } = await this.supabase
       .from('producto')
-      .insert({ nombre: nombre.trim() })
-      .select()
+      .insert({ nombre: nombre.trim(), market_id: marketId })
+      .select('*, markets:market_id(name)')
       .single();
 
     if (error) throw error;
-    return data;
+    return this.mapRow(data as ProductoRow);
   }
 
-  async rename(id: string, nombre: string): Promise<void> {
+  async update(id: string, nombre: string, marketId: string): Promise<void> {
     const { error } = await this.supabase
       .from('producto')
-      .update({ nombre: nombre.trim() })
+      .update({ nombre: nombre.trim(), market_id: marketId })
       .eq('id', id);
     if (error) throw error;
   }
@@ -39,5 +43,16 @@ export class ProductosService {
   async remove(id: string): Promise<void> {
     const { error } = await this.supabase.from('producto').delete().eq('id', id);
     if (error) throw error;
+  }
+
+  private mapRow(row: ProductoRow): Producto {
+    return {
+      id: row.id,
+      nombre: row.nombre,
+      market_id: row.market_id ?? null,
+      lista_nombre: row.markets?.name ?? '',
+      created_at: row.created_at,
+      user_id: row.user_id,
+    };
   }
 }

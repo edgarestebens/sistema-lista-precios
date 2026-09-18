@@ -1,8 +1,9 @@
 import { Component, OnInit, computed, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { Producto } from '../../models/models';
+import { Market, Producto } from '../../models/models';
 import { toSpanishError } from '../../core/es-error';
+import { MarketsService } from '../../services/markets.service';
 import { ProductosService } from '../../services/productos.service';
 
 @Component({
@@ -14,10 +15,12 @@ import { ProductosService } from '../../services/productos.service';
 })
 export class ProductosComponent implements OnInit {
   productos = signal<Producto[]>([]);
+  markets = signal<Market[]>([]);
   loading = signal(true);
   error = signal<string | null>(null);
   showForm = signal(false);
   formName = '';
+  formMarketId = '';
   editingId = signal<string | null>(null);
   deletingId = signal<string | null>(null);
   saving = signal(false);
@@ -25,14 +28,24 @@ export class ProductosComponent implements OnInit {
   page = signal(1);
   pageSize = signal(10);
   searchQuery = signal('');
+  filterMarketId = signal('');
   readonly pageSizeOptions = [5, 10, 25];
 
   readonly productosFiltrados = computed(() => {
     const q = this.searchQuery().trim().toLocaleLowerCase('es');
-    if (!q) return this.productos();
-    return this.productos().filter((p) =>
-      p.nombre.toLocaleLowerCase('es').includes(q)
-    );
+    const listaId = this.filterMarketId();
+    return this.productos().filter((p) => {
+      if (listaId === '__none__') {
+        if (p.market_id) return false;
+      } else if (listaId && p.market_id !== listaId) {
+        return false;
+      }
+      if (!q) return true;
+      return (
+        p.nombre.toLocaleLowerCase('es').includes(q) ||
+        (p.lista_nombre ?? '').toLocaleLowerCase('es').includes(q)
+      );
+    });
   });
 
   readonly totalPages = computed(() => {
@@ -59,7 +72,6 @@ export class ProductosComponent implements OnInit {
     return this.productosFiltrados().slice(start, start + size);
   });
 
-  /** Números de página visibles (máx. 5 alrededor de la actual). */
   readonly pages = computed(() => {
     const total = this.totalPages();
     const current = this.page();
@@ -75,7 +87,10 @@ export class ProductosComponent implements OnInit {
     return list;
   });
 
-  constructor(private productosService: ProductosService) {}
+  constructor(
+    private productosService: ProductosService,
+    private marketsService: MarketsService
+  ) {}
 
   async ngOnInit(): Promise<void> {
     await this.load();
@@ -85,7 +100,12 @@ export class ProductosComponent implements OnInit {
     this.loading.set(true);
     this.error.set(null);
     try {
-      this.productos.set(await this.productosService.list());
+      const [productos, markets] = await Promise.all([
+        this.productosService.list(),
+        this.marketsService.list(),
+      ]);
+      this.productos.set(productos);
+      this.markets.set(markets);
       this.clampPage();
     } catch (e) {
       this.error.set(toSpanishError(e, 'Error al cargar'));
@@ -96,6 +116,11 @@ export class ProductosComponent implements OnInit {
 
   onSearchChange(value: string): void {
     this.searchQuery.set(value);
+    this.page.set(1);
+  }
+
+  onFilterListaChange(value: string): void {
+    this.filterMarketId.set(value);
     this.page.set(1);
   }
 
@@ -128,6 +153,7 @@ export class ProductosComponent implements OnInit {
   openAdd(): void {
     this.editingId.set(null);
     this.formName = '';
+    this.formMarketId = '';
     this.error.set(null);
     this.showForm.set(true);
   }
@@ -137,6 +163,7 @@ export class ProductosComponent implements OnInit {
     event.preventDefault();
     this.editingId.set(producto.id);
     this.formName = producto.nombre;
+    this.formMarketId = producto.market_id ?? '';
     this.error.set(null);
     this.showForm.set(true);
   }
@@ -144,6 +171,7 @@ export class ProductosComponent implements OnInit {
   closeForm(): void {
     this.showForm.set(false);
     this.formName = '';
+    this.formMarketId = '';
     this.editingId.set(null);
   }
 
@@ -156,9 +184,18 @@ export class ProductosComponent implements OnInit {
     );
   }
 
+  private listaNombre(marketId: string): string {
+    return this.markets().find((m) => m.id === marketId)?.name ?? '';
+  }
+
   async saveProducto(): Promise<void> {
     const nombre = this.formName.trim();
+    const marketId = this.formMarketId.trim();
     if (!nombre || this.saving()) return;
+    if (!marketId) {
+      this.error.set('Debes elegir una lista.');
+      return;
+    }
     const editId = this.editingId();
     if (this.nombreYaExiste(nombre, editId)) {
       this.error.set('Ese producto ya existe en la lista.');
@@ -168,16 +205,21 @@ export class ProductosComponent implements OnInit {
     this.error.set(null);
     try {
       if (editId) {
-        await this.productosService.rename(editId, nombre);
+        await this.productosService.update(editId, nombre, marketId);
+        const lista_nombre = this.listaNombre(marketId);
         this.productos.update((list) =>
           list
-            .map((p) => (p.id === editId ? { ...p, nombre } : p))
+            .map((p) =>
+              p.id === editId
+                ? { ...p, nombre, market_id: marketId, lista_nombre }
+                : p
+            )
             .sort((a, b) =>
               a.nombre.localeCompare(b.nombre, 'es', { sensitivity: 'base' })
             )
         );
       } else {
-        const producto = await this.productosService.create(nombre);
+        const producto = await this.productosService.create(nombre, marketId);
         this.productos.update((list) =>
           [...list, producto].sort((a, b) =>
             a.nombre.localeCompare(b.nombre, 'es', { sensitivity: 'base' })

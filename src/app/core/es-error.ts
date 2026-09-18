@@ -52,7 +52,7 @@ export function toSpanishError(
     m.includes('violates foreign key') ||
     m.includes('is still referenced')
   ) {
-    return 'No se puede eliminar: el producto está en uso en alguna lista.';
+    return 'No se puede eliminar: el registro está en uso.';
   }
   if (m.includes('user_id required') || m.includes('not authenticated')) {
     return 'Debes iniciar sesión para continuar.';

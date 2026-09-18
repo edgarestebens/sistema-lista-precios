@@ -38,10 +38,12 @@ export class ItemsComponent implements OnInit {
     () => this.items().length > 0 && this.items().every((i) => i.is_checked)
   );
 
-  /** Productos que aún no están en esta lista (para el combo de agregar). */
+  /** Productos de esta lista que aún no están agregados. */
   readonly productosDisponibles = computed(() => {
     const usados = new Set(this.items().map((i) => i.producto_id));
-    return this.productos().filter((p) => !usados.has(p.id));
+    return this.productos().filter(
+      (p) => p.market_id === this.marketId && !usados.has(p.id)
+    );
   });
 
   constructor(

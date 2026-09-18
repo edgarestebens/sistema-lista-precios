@@ -24,9 +24,36 @@ describe('ItemsComponent', () => {
   };
 
   const productos: Producto[] = [
-    { id: 'p1', nombre: 'Leche', created_at: '2026-01-01T00:00:00Z' },
-    { id: 'p2', nombre: 'Arroz', created_at: '2026-01-01T00:00:00Z' },
-    { id: 'p3', nombre: 'Pan', created_at: '2026-01-01T00:00:00Z' },
+    {
+      id: 'p1',
+      nombre: 'Leche',
+      market_id: 'm1',
+      created_at: '2026-01-01T00:00:00Z',
+    },
+    {
+      id: 'p2',
+      nombre: 'Arroz',
+      market_id: 'm1',
+      created_at: '2026-01-01T00:00:00Z',
+    },
+    {
+      id: 'p3',
+      nombre: 'Pan',
+      market_id: 'm1',
+      created_at: '2026-01-01T00:00:00Z',
+    },
+    {
+      id: 'p4',
+      nombre: 'Tomate',
+      market_id: 'm2',
+      created_at: '2026-01-01T00:00:00Z',
+    },
+    {
+      id: 'p5',
+      nombre: 'Sin lista',
+      market_id: null,
+      created_at: '2026-01-01T00:00:00Z',
+    },
   ];
 
   const preciosBaratos: Record<string, PrecioMasBarato> = {
@@ -110,7 +137,7 @@ describe('ItemsComponent', () => {
     expect(productosService.list).toHaveBeenCalled();
     expect(component.market()?.name).toBe('Mercado');
     expect(component.items().length).toBe(2);
-    expect(component.productos().length).toBe(3);
+    expect(component.productos().length).toBe(5);
   });
 
   it('renderiza ítems y título', async () => {
@@ -233,7 +260,7 @@ describe('ItemsComponent', () => {
     expect(router.navigate).toHaveBeenCalledWith(['/']);
   });
 
-  it('productosDisponibles() oculta productos ya agregados', async () => {
+  it('productosDisponibles() filtra por lista y oculta ya agregados', async () => {
     fixture.detectChanges();
     await fixture.whenStable();
     expect(component.productosDisponibles().map((p) => p.id)).toEqual(['p3']);
