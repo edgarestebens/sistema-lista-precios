@@ -84,7 +84,12 @@
           </button>
 
           <div class="row-main">
-            <span class="row-title" [class.struck]="item.is_checked">{{ item.nombre }}</span>
+            <div class="row-text">
+              <span class="row-title" [class.struck]="item.is_checked">{{ item.nombre }}</span>
+              @if (precioBaratoTexto(item); as precioTxt) {
+                <span class="row-precio" [class.struck]="item.is_checked">{{ precioTxt }}</span>
+              }
+            </div>
             <div class="row-actions">
               <button
                 type="button"

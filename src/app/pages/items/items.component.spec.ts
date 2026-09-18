@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap, provideRouter, Router } from '@angular/router';
-import { Item, Market, Producto } from '../../models/models';
+import { Item, Market, PrecioMasBarato, Producto } from '../../models/models';
+import { ComparativoPrecioService } from '../../services/comparativo-precio.service';
 import { ItemsService } from '../../services/items.service';
 import { MarketsService } from '../../services/markets.service';
 import { ProductosService } from '../../services/productos.service';
@@ -12,6 +13,7 @@ describe('ItemsComponent', () => {
   let itemsService: jasmine.SpyObj<ItemsService>;
   let marketsService: jasmine.SpyObj<MarketsService>;
   let productosService: jasmine.SpyObj<ProductosService>;
+  let comparativoService: jasmine.SpyObj<ComparativoPrecioService>;
   let router: Router;
 
   const market: Market = {
@@ -26,6 +28,10 @@ describe('ItemsComponent', () => {
     { id: 'p2', nombre: 'Arroz', created_at: '2026-01-01T00:00:00Z' },
     { id: 'p3', nombre: 'Pan', created_at: '2026-01-01T00:00:00Z' },
   ];
+
+  const preciosBaratos: Record<string, PrecioMasBarato> = {
+    p1: { producto_id: 'p1', precio: 2800, mercado_nombre: 'D1' },
+  };
 
   const items: Item[] = [
     {
@@ -62,10 +68,15 @@ describe('ItemsComponent', () => {
     productosService = jasmine.createSpyObj<ProductosService>('ProductosService', [
       'list',
     ]);
+    comparativoService = jasmine.createSpyObj<ComparativoPrecioService>(
+      'ComparativoPrecioService',
+      ['mapPrecioMasBarato']
+    );
 
     marketsService.getById.and.resolveTo(market);
     itemsService.listByMarket.and.resolveTo(items);
     productosService.list.and.resolveTo(productos);
+    comparativoService.mapPrecioMasBarato.and.resolveTo(preciosBaratos);
 
     await TestBed.configureTestingModule({
       imports: [ItemsComponent],
@@ -74,6 +85,7 @@ describe('ItemsComponent', () => {
         { provide: ItemsService, useValue: itemsService },
         { provide: MarketsService, useValue: marketsService },
         { provide: ProductosService, useValue: productosService },
+        { provide: ComparativoPrecioService, useValue: comparativoService },
         {
           provide: ActivatedRoute,
           useValue: {
@@ -109,6 +121,15 @@ describe('ItemsComponent', () => {
     expect(text).toContain('Mercado');
     expect(text).toContain('Leche');
     expect(text).toContain('Arroz');
+    expect(text).toContain('D1');
+    expect(text).toContain('2.800');
+  });
+
+  it('precioBaratoTexto() queda vacío sin comparativo', async () => {
+    fixture.detectChanges();
+    await fixture.whenStable();
+    expect(component.precioBaratoTexto(items[1])).toBe('');
+    expect(component.precioBaratoTexto(items[0])).toContain('D1');
   });
 
   it('addItem() agrega con producto_id y limpia el select', async () => {

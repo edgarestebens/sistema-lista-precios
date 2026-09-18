@@ -1,7 +1,7 @@
 import { Inject, Injectable } from '@angular/core';
 import { SupabaseClient } from '@supabase/supabase-js';
 import { SUPABASE_CLIENT } from '../core/supabase.client';
-import { ComparativoPrecio, ComparativoProducto } from '../models/models';
+import { ComparativoPrecio, ComparativoProducto, PrecioMasBarato } from '../models/models';
 
 @Injectable({ providedIn: 'root' })
 export class ComparativoPrecioService {
@@ -39,6 +39,28 @@ export class ComparativoPrecioService {
         sensitivity: 'base',
       })
     );
+  }
+
+  /** Mapa producto_id → precio más barato (> 0) con nombre de mercado. */
+  async mapPrecioMasBarato(): Promise<Record<string, PrecioMasBarato>> {
+    const rows = await this.list();
+    const best = new Map<string, PrecioMasBarato>();
+
+    for (const row of rows) {
+      const precio = Number(row.precio) || 0;
+      if (precio <= 0) continue;
+
+      const actual = best.get(row.producto_id);
+      if (!actual || precio < actual.precio) {
+        best.set(row.producto_id, {
+          producto_id: row.producto_id,
+          precio,
+          mercado_nombre: row.mercado?.nombre ?? '',
+        });
+      }
+    }
+
+    return Object.fromEntries(best.entries());
   }
 
   async saveForProducto(

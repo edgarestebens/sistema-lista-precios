@@ -38,6 +38,13 @@ export interface ComparativoProducto {
   precios: Record<string, number>;
 }
 
+/** Precio más bajo (> 0) de un producto en el comparativo. */
+export interface PrecioMasBarato {
+  producto_id: string;
+  precio: number;
+  mercado_nombre: string;
+}
+
 export interface Item {
   id: string;
   market_id: string;

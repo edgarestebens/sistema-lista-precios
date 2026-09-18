@@ -76,6 +76,19 @@ describe('ComparativoPrecioService', () => {
     expect(leche?.precios['me2']).toBe(2800);
   });
 
+  it('mapPrecioMasBarato() toma el menor > 0', async () => {
+    fromSpy.and.returnValue(
+      createQueryChain({ data: sampleRows, error: null })
+    );
+    const map = await service.mapPrecioMasBarato();
+    expect(map['p1']).toEqual({
+      producto_id: 'p1',
+      precio: 2800,
+      mercado_nombre: 'D1',
+    });
+    expect(map['p2']).toBeUndefined();
+  });
+
   it('saveForProducto() hace upsert por mercado', async () => {
     let upsertPayload: unknown;
     let upsertOpts: unknown;

@@ -6,8 +6,9 @@ import {
   moveItemInArray,
 } from '@angular/cdk/drag-drop';
 import { FormsModule } from '@angular/forms';
-import { Item, Market, Producto } from '../../models/models';
+import { Item, Market, PrecioMasBarato, Producto } from '../../models/models';
 import { toSpanishError } from '../../core/es-error';
+import { ComparativoPrecioService } from '../../services/comparativo-precio.service';
 import { ItemsService } from '../../services/items.service';
 import { MarketsService } from '../../services/markets.service';
 import { ProductosService } from '../../services/productos.service';
@@ -23,6 +24,7 @@ export class ItemsComponent implements OnInit {
   market = signal<Market | null>(null);
   items = signal<Item[]>([]);
   productos = signal<Producto[]>([]);
+  preciosBaratos = signal<Record<string, PrecioMasBarato>>({});
   loading = signal(true);
   error = signal<string | null>(null);
   selectedProductoId = '';
@@ -47,7 +49,8 @@ export class ItemsComponent implements OnInit {
     private router: Router,
     private itemsService: ItemsService,
     private marketsService: MarketsService,
-    private productosService: ProductosService
+    private productosService: ProductosService,
+    private comparativoService: ComparativoPrecioService
   ) {}
 
   async ngOnInit(): Promise<void> {
@@ -69,17 +72,31 @@ export class ItemsComponent implements OnInit {
         return;
       }
       this.market.set(market);
-      const [items, productos] = await Promise.all([
+      const [items, productos, preciosBaratos] = await Promise.all([
         this.itemsService.listByMarket(this.marketId),
         this.productosService.list(),
+        this.comparativoService.mapPrecioMasBarato(),
       ]);
       this.items.set(items);
       this.productos.set(productos);
+      this.preciosBaratos.set(preciosBaratos);
     } catch (e) {
       this.error.set(toSpanishError(e, 'Error al cargar'));
     } finally {
       this.loading.set(false);
     }
+  }
+
+  precioBaratoTexto(item: Item): string {
+    const best = this.preciosBaratos()[item.producto_id];
+    if (!best || best.precio <= 0) return '';
+    const precio = best.precio.toLocaleString('es-CO', {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 2,
+    });
+    return best.mercado_nombre
+      ? `${best.mercado_nombre} · ${precio}`
+      : precio;
   }
 
   async addItem(): Promise<void> {
