@@ -10,15 +10,7 @@ describe('LoginComponent', () => {
   let router: Router;
 
   beforeEach(async () => {
-    auth = jasmine.createSpyObj<AuthService>('AuthService', [
-      'signIn',
-      'signUp',
-      'signOut',
-    ], {
-      session: jasmine.createSpy().and.returnValue(null) as never,
-    });
-    // session is a signal in the real service — provide a callable signal-like
-    (auth as unknown as { session: () => null }).session = () => null;
+    auth = jasmine.createSpyObj<AuthService>('AuthService', ['signIn', 'signOut']);
 
     await TestBed.configureTestingModule({
       imports: [LoginComponent],
@@ -35,7 +27,7 @@ describe('LoginComponent', () => {
     component = fixture.componentInstance;
   });
 
-  it('submit login llama signIn y navega', async () => {
+  it('submit llama signIn y navega', async () => {
     auth.signIn.and.resolveTo();
     component.email = 'a@b.com';
     component.password = 'secret12';
@@ -44,18 +36,11 @@ describe('LoginComponent', () => {
     expect(router.navigateByUrl).toHaveBeenCalledWith('/');
   });
 
-  it('submit registro llama signUp', async () => {
-    auth.signUp.and.resolveTo();
-    auth.signIn.and.resolveTo();
-    component.switchMode('register');
-    component.email = 'nuevo@test.com';
-    component.password = 'secret12';
-    component.fullName = 'Nuevo';
+  it('muestra error en español si falla el login', async () => {
+    auth.signIn.and.rejectWith(new Error('Invalid login credentials'));
+    component.email = 'a@b.com';
+    component.password = 'mala';
     await component.submit();
-    expect(auth.signUp).toHaveBeenCalledWith(
-      'nuevo@test.com',
-      'secret12',
-      'Nuevo'
-    );
+    expect(component.error()).toBe('Email o contraseña incorrectos');
   });
 });

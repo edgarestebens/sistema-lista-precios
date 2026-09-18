@@ -35,28 +35,6 @@
   font-size: 0.95rem;
 }
 
-.tabs {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.35rem;
-  margin-bottom: 1rem;
-}
-
-.tabs button {
-  border: 1px solid #333;
-  background: #0f0f0f;
-  color: var(--text-muted);
-  border-radius: 8px;
-  padding: 0.6rem;
-  cursor: pointer;
-}
-
-.tabs button.active {
-  background: var(--fab);
-  border-color: var(--fab);
-  color: #fff;
-}
-
 .error-banner {
   background: #3a1515;
   color: #ffb4b4;

@@ -7,6 +7,7 @@ import {
 } from '@angular/cdk/drag-drop';
 import { FormsModule } from '@angular/forms';
 import { Item, Market } from '../../models/models';
+import { toSpanishError } from '../../core/es-error';
 import { ItemsService } from '../../services/items.service';
 import { MarketsService } from '../../services/markets.service';
 
@@ -65,7 +66,7 @@ export class ItemsComponent implements OnInit {
       this.market.set(market);
       this.items.set(await this.itemsService.listByMarket(this.marketId));
     } catch (e) {
-      this.error.set(e instanceof Error ? e.message : 'Error al cargar');
+      this.error.set(toSpanishError(e, 'Error al cargar'));
     } finally {
       this.loading.set(false);
     }
@@ -85,7 +86,7 @@ export class ItemsComponent implements OnInit {
       this.newName = '';
       await this.itemsService.reorder(this.items());
     } catch (e) {
-      this.error.set(e instanceof Error ? e.message : 'Error al agregar');
+      this.error.set(toSpanishError(e, 'Error al agregar'));
     } finally {
       this.adding.set(false);
     }
@@ -115,7 +116,7 @@ export class ItemsComponent implements OnInit {
       await this.itemsService.toggleChecked(item.id, next);
       await this.itemsService.reorder(list);
     } catch (e) {
-      this.error.set(e instanceof Error ? e.message : 'Error al tachar');
+      this.error.set(toSpanishError(e, 'Error al tachar'));
       await this.load();
     }
   }
@@ -147,9 +148,7 @@ export class ItemsComponent implements OnInit {
       );
       await this.itemsService.reorder(list);
     } catch (e) {
-      this.error.set(
-        e instanceof Error ? e.message : 'Error al seleccionar todo'
-      );
+      this.error.set(toSpanishError(e, 'Error al seleccionar todo'));
       await this.load();
     } finally {
       this.togglingAll.set(false);
@@ -163,7 +162,7 @@ export class ItemsComponent implements OnInit {
       await this.itemsService.remove(item.id);
       this.items.update((list) => list.filter((i) => i.id !== item.id));
     } catch (e) {
-      this.error.set(e instanceof Error ? e.message : 'Error al eliminar');
+      this.error.set(toSpanishError(e, 'Error al eliminar'));
     } finally {
       this.deletingId.set(null);
     }
@@ -194,7 +193,7 @@ export class ItemsComponent implements OnInit {
       );
       this.closeEdit();
     } catch (e) {
-      this.error.set(e instanceof Error ? e.message : 'Error al editar');
+      this.error.set(toSpanishError(e, 'Error al editar'));
     } finally {
       this.savingEdit.set(false);
     }
@@ -208,7 +207,7 @@ export class ItemsComponent implements OnInit {
     try {
       await this.itemsService.reorder(list);
     } catch (e) {
-      this.error.set(e instanceof Error ? e.message : 'Error al ordenar');
+      this.error.set(toSpanishError(e, 'Error al ordenar'));
       await this.load();
     }
   }
@@ -242,7 +241,7 @@ export class ItemsComponent implements OnInit {
     try {
       await this.itemsService.reorder(list);
     } catch (e) {
-      this.error.set(e instanceof Error ? e.message : 'Error al ordenar');
+      this.error.set(toSpanishError(e, 'Error al ordenar'));
       await this.load();
     }
   }

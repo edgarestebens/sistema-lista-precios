@@ -1,39 +1,13 @@
 <div class="login-screen">
   <div class="login-card">
     <h1>Lista de Mercado M y E</h1>
-    <p class="subtitle">
-      {{ mode() === 'login' ? 'Inicia sesión para ver tus listas' : 'Crea tu cuenta' }}
-    </p>
-
-    <div class="tabs">
-      <button
-        type="button"
-        [class.active]="mode() === 'login'"
-        (click)="switchMode('login')"
-      >
-        Entrar
-      </button>
-      <button
-        type="button"
-        [class.active]="mode() === 'register'"
-        (click)="switchMode('register')"
-      >
-        Registrarse
-      </button>
-    </div>
+    <p class="subtitle">Inicia sesión para ver tus listas</p>
 
     @if (error()) {
       <p class="error-banner">{{ error() }}</p>
     }
 
     <form (submit)="$event.preventDefault(); submit()">
-      @if (mode() === 'register') {
-        <label>
-          Nombre
-          <input type="text" [(ngModel)]="fullName" name="fullName" autocomplete="name" />
-        </label>
-      }
-
       <label>
         Email
         <input
@@ -51,13 +25,13 @@
           type="password"
           [(ngModel)]="password"
           name="password"
-          autocomplete="{{ mode() === 'login' ? 'current-password' : 'new-password' }}"
+          autocomplete="current-password"
           required
         />
       </label>
 
       <button type="submit" class="submit" [disabled]="loading()">
-        {{ loading() ? 'Espera…' : mode() === 'login' ? 'Entrar' : 'Crear cuenta' }}
+        {{ loading() ? 'Espera…' : 'Entrar' }}
       </button>
     </form>
   </div>

@@ -84,7 +84,7 @@ npx ng test --watch=false --browsers=Chrome
 
 ## Autenticación
 
-- Login / registro con **email + contraseña** (Supabase Auth)
+- Login con **email + contraseña** (Supabase Auth). El registro está desactivado por ahora.
 - Reutiliza la tabla `profiles` del mismo proyecto Supabase
 - Cada usuario solo ve sus propias listas e ítems (RLS)
 - Botón **Salir** en la pantalla principal

@@ -7,6 +7,7 @@ import {
 } from '@angular/cdk/drag-drop';
 import { FormsModule } from '@angular/forms';
 import { Market } from '../../models/models';
+import { toSpanishError } from '../../core/es-error';
 import { AuthService } from '../../services/auth.service';
 import { MarketsService } from '../../services/markets.service';
 
@@ -42,7 +43,7 @@ export class MarketsComponent implements OnInit {
       await this.auth.signOut();
       await this.router.navigateByUrl('/login');
     } catch (e) {
-      this.error.set(e instanceof Error ? e.message : 'Error al salir');
+      this.error.set(toSpanishError(e, 'Error al salir'));
     }
   }
 
@@ -52,7 +53,7 @@ export class MarketsComponent implements OnInit {
     try {
       this.markets.set(await this.marketsService.list());
     } catch (e) {
-      this.error.set(e instanceof Error ? e.message : 'Error al cargar');
+      this.error.set(toSpanishError(e, 'Error al cargar'));
     } finally {
       this.loading.set(false);
     }
@@ -95,7 +96,7 @@ export class MarketsComponent implements OnInit {
       }
       this.closeForm();
     } catch (e) {
-      this.error.set(e instanceof Error ? e.message : 'Error al guardar');
+      this.error.set(toSpanishError(e, 'Error al guardar'));
     } finally {
       this.saving.set(false);
     }
@@ -110,7 +111,7 @@ export class MarketsComponent implements OnInit {
       await this.marketsService.remove(market.id);
       this.markets.update((list) => list.filter((m) => m.id !== market.id));
     } catch (e) {
-      this.error.set(e instanceof Error ? e.message : 'Error al eliminar');
+      this.error.set(toSpanishError(e, 'Error al eliminar'));
     } finally {
       this.deletingId.set(null);
     }
@@ -128,7 +129,7 @@ export class MarketsComponent implements OnInit {
     try {
       await this.marketsService.reorder(list);
     } catch (e) {
-      this.error.set(e instanceof Error ? e.message : 'Error al ordenar');
+      this.error.set(toSpanishError(e, 'Error al ordenar'));
       await this.load();
     }
   }
