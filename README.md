@@ -49,6 +49,14 @@ Las URL y clave anónima de Supabase están en:
 
 Ajusta `supabaseUrl` y `supabaseAnonKey` si usas otro proyecto.
 
+## Ver la app en la web (GitHub Pages)
+
+La app se publica automáticamente al hacer push a `main`:
+
+**https://edgarestebens.github.io/sistema-lista-precios/**
+
+> Nota: si abres Pages sin desplegar el build, GitHub muestra el README. El sitio real es el resultado de `ng build` (workflow `Deploy GitHub Pages`).
+
 ## Cómo correrlo
 
 ```bash

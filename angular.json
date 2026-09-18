@@ -33,6 +33,7 @@
           },
           "configurations": {
             "production": {
+              "baseHref": "/sistema-lista-precios/",
               "budgets": [
                 {
                   "type": "initial",
