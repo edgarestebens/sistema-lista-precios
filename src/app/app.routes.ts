@@ -4,6 +4,7 @@ import { ItemsComponent } from './pages/items/items.component';
 import { LoginComponent } from './pages/login/login.component';
 import { ProductosComponent } from './pages/productos/productos.component';
 import { MercadosComponent } from './pages/mercados/mercados.component';
+import { ComparativoPrecioComponent } from './pages/comparativo-precio/comparativo-precio.component';
 import { authGuard, guestGuard } from './guards/auth.guard';
 
 export const routes: Routes = [
@@ -11,6 +12,11 @@ export const routes: Routes = [
   { path: '', component: MarketsComponent, canActivate: [authGuard] },
   { path: 'productos', component: ProductosComponent, canActivate: [authGuard] },
   { path: 'mercados', component: MercadosComponent, canActivate: [authGuard] },
+  {
+    path: 'comparativo-precio',
+    component: ComparativoPrecioComponent,
+    canActivate: [authGuard],
+  },
   { path: 'mercados/:id', component: ItemsComponent, canActivate: [authGuard] },
   { path: '**', redirectTo: '' },
 ];

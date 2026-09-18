@@ -20,6 +20,24 @@ export interface Mercado {
   created_at: string;
 }
 
+export interface ComparativoPrecio {
+  id: string;
+  producto_id: string;
+  mercado_id: string;
+  precio: number;
+  user_id?: string;
+  created_at: string;
+  producto?: { nombre: string } | null;
+  mercado?: { nombre: string } | null;
+}
+
+/** Vista agrupada: un producto con precios por mercado. */
+export interface ComparativoProducto {
+  producto_id: string;
+  producto_nombre: string;
+  precios: Record<string, number>;
+}
+
 export interface Item {
   id: string;
   market_id: string;

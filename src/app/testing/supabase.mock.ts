@@ -2,6 +2,7 @@ export type QueryChain = {
   select: jasmine.Spy;
   insert: jasmine.Spy;
   update: jasmine.Spy;
+  upsert: jasmine.Spy;
   delete: jasmine.Spy;
   eq: jasmine.Spy;
   order: jasmine.Spy;
@@ -20,6 +21,7 @@ export function createQueryChain(result: {
     'select',
     'insert',
     'update',
+    'upsert',
     'delete',
     'eq',
     'order',

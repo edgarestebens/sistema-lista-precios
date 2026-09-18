@@ -1,0 +1,138 @@
+<div class="screen">
+  <header class="screen-header">
+    <a routerLink="/" class="back" aria-label="Volver">‹</a>
+    <h1>Comparativo de precio</h1>
+  </header>
+
+  @if (error()) {
+    <p class="error-banner">{{ error() }}</p>
+  }
+
+  @if (loading()) {
+    <p class="muted">Cargando…</p>
+  } @else if (!canCreate()) {
+    <p class="muted empty">
+      Primero crea productos y mercados en el menú para poder comparar precios.
+    </p>
+  } @else if (filas().length === 0) {
+    <p class="muted empty">Sin comparativos. Toca + para agregar uno.</p>
+  } @else {
+    <div class="table-wrap">
+      <table class="compare-table">
+        <thead>
+          <tr>
+            <th class="col-producto">Producto</th>
+            @for (m of mercados(); track m.id) {
+              <th>{{ m.nombre }}</th>
+            }
+            <th class="col-actions">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (fila of filas(); track fila.producto_id) {
+            <tr>
+              <td class="col-producto">{{ fila.producto_nombre }}</td>
+              @for (m of mercados(); track m.id) {
+                <td
+                  class="col-precio"
+                  [class.barato]="clasePrecio(fila, m.id) === 'barato'"
+                  [class.caro]="clasePrecio(fila, m.id) === 'caro'"
+                >
+                  {{ formatPrecio(precioDe(fila, m.id)) }}
+                </td>
+              }
+              <td class="col-actions">
+                <button
+                  type="button"
+                  class="action-btn"
+                  (click)="openEdit($event, fila)"
+                >
+                  Editar
+                </button>
+                <button
+                  type="button"
+                  class="action-btn danger"
+                  (click)="deleteFila($event, fila)"
+                  [disabled]="deletingId() === fila.producto_id"
+                >
+                  Eliminar
+                </button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+
+  <button
+    type="button"
+    class="fab"
+    (click)="openAdd()"
+    aria-label="Agregar comparativo"
+  >
+    +
+  </button>
+
+  @if (showForm()) {
+    <div class="modal-backdrop" (click)="closeForm()">
+      <div class="modal" (click)="$event.stopPropagation()">
+        <h2>
+          {{ editingProductoId() ? 'Editar comparativo' : 'Nuevo comparativo' }}
+        </h2>
+
+        @if (error()) {
+          <p class="error-banner">{{ error() }}</p>
+        }
+
+        @if (editingProductoId()) {
+          <p class="form-label">
+            Producto:
+            <strong>{{ nombreProductoEditando() }}</strong>
+          </p>
+        } @else {
+          <label class="form-label" for="productoSelect">Producto</label>
+          <select
+            id="productoSelect"
+            [(ngModel)]="selectedProductoId"
+            name="productoId"
+          >
+            <option value="">Elegir producto…</option>
+            @for (p of productosDisponibles(); track p.id) {
+              <option [value]="p.id">{{ p.nombre }}</option>
+            }
+          </select>
+        }
+
+        <div class="precios-list">
+          @for (m of mercados(); track m.id) {
+            <label class="precio-row">
+              <span>{{ m.nombre }}</span>
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                [(ngModel)]="preciosForm[m.id]"
+                [name]="'precio_' + m.id"
+              />
+            </label>
+          }
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" class="btn ghost" (click)="closeForm()">
+            Cancelar
+          </button>
+          <button
+            type="button"
+            class="btn primary"
+            (click)="save()"
+            [disabled]="saving() || mercados().length === 0"
+          >
+            Guardar
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+</div>

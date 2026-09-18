@@ -167,6 +167,14 @@ describe('MarketsComponent', () => {
     expect(component.showMenu()).toBeFalse();
   });
 
+  it('goComparativo() navega a /comparativo-precio', async () => {
+    fixture.detectChanges();
+    await fixture.whenStable();
+    component.goComparativo();
+    expect(router.navigate).toHaveBeenCalledWith(['/comparativo-precio']);
+    expect(component.showMenu()).toBeFalse();
+  });
+
   it('muestra error si list falla', async () => {
     marketsService.list.and.rejectWith(new Error('sin red'));
     fixture.detectChanges();
