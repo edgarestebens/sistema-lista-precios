@@ -1,0 +1,92 @@
+<div class="screen">
+  <header class="screen-header">
+    <h1 class="app-title">Lista de Mercado M y E</h1>
+  </header>
+
+  @if (error()) {
+    <p class="error-banner">{{ error() }}</p>
+  }
+
+  @if (loading()) {
+    <p class="muted">Cargando…</p>
+  } @else if (markets().length === 0) {
+    <p class="muted empty">No hay mercados. Toca + para agregar uno.</p>
+  } @else {
+    <div
+      class="list"
+      cdkDropList
+      [cdkDropListData]="markets()"
+      (cdkDropListDropped)="drop($event)"
+    >
+      @for (market of markets(); track market.id) {
+        <div
+          class="row"
+          cdkDrag
+          [cdkDragData]="market"
+          (click)="openMarket(market)"
+        >
+          <div class="row-main">
+            <span class="row-title">{{ market.name }}</span>
+            <div class="row-actions">
+              <button
+                type="button"
+                class="action-btn"
+                (click)="openEdit($event, market)"
+              >
+                Editar
+              </button>
+              <button
+                type="button"
+                class="action-btn danger"
+                (click)="deleteMarket($event, market)"
+                [disabled]="deletingId() === market.id"
+              >
+                Eliminar
+              </button>
+            </div>
+          </div>
+          <button
+            type="button"
+            class="drag-handle"
+            cdkDragHandle
+            (click)="$event.stopPropagation()"
+            aria-label="Mover"
+          >
+            <span></span>
+            <span></span>
+          </button>
+        </div>
+      }
+    </div>
+  }
+
+  <button type="button" class="fab" (click)="openAdd()" aria-label="Agregar mercado">
+    +
+  </button>
+
+  @if (showForm()) {
+    <div class="modal-backdrop" (click)="closeForm()">
+      <div class="modal" (click)="$event.stopPropagation()">
+        <h2>{{ editingId() ? 'Editar mercado' : 'Nuevo mercado' }}</h2>
+        <input
+          type="text"
+          [(ngModel)]="formName"
+          placeholder="Nombre"
+          autofocus
+          (keyup.enter)="saveMarket()"
+        />
+        <div class="modal-actions">
+          <button type="button" class="btn ghost" (click)="closeForm()">Cancelar</button>
+          <button
+            type="button"
+            class="btn primary"
+            (click)="saveMarket()"
+            [disabled]="saving() || !formName.trim()"
+          >
+            Guardar
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+</div>

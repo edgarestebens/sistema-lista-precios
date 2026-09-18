@@ -1,0 +1,166 @@
+<div class="screen">
+  <header class="screen-header">
+    <a routerLink="/" class="back" aria-label="Volver">‹</a>
+    <h1>{{ market()?.name ?? '…' }}</h1>
+    <div class="menu-wrap">
+      <button
+        type="button"
+        class="menu-btn"
+        (click)="toggleMenu($event)"
+        aria-label="Menú"
+        [attr.aria-expanded]="showMenu()"
+      >
+        ⋮
+      </button>
+      @if (showMenu()) {
+        <div class="menu-backdrop" (click)="closeMenu()"></div>
+        <div class="menu-panel" role="menu">
+          <button type="button" role="menuitem" (click)="sortAlphabetically('asc')">
+            Ordenar A → Z
+          </button>
+          <button type="button" role="menuitem" (click)="sortAlphabetically('desc')">
+            Ordenar Z → A
+          </button>
+        </div>
+      }
+    </div>
+  </header>
+
+  @if (error()) {
+    <p class="error-banner">{{ error() }}</p>
+  }
+
+  @if (loading()) {
+    <p class="muted">Cargando…</p>
+  } @else if (items().length === 0) {
+    <p class="muted empty">Sin ítems. Escribe abajo para agregar.</p>
+  } @else {
+    <div class="select-all" (click)="toggleAll()">
+      <button
+        type="button"
+        class="check"
+        [class.checked]="allChecked()"
+        [disabled]="togglingAll()"
+        [attr.aria-checked]="allChecked()"
+        role="checkbox"
+        aria-label="Seleccionar todo"
+      >
+        @if (allChecked()) {
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path
+              d="M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z"
+              fill="currentColor"
+            />
+          </svg>
+        }
+      </button>
+      <span class="select-all-label">Seleccionar todo</span>
+    </div>
+
+    <div
+      class="list"
+      cdkDropList
+      [cdkDropListData]="items()"
+      (cdkDropListDropped)="drop($event)"
+    >
+      @for (item of items(); track item.id) {
+        <div class="row" cdkDrag [cdkDragData]="item">
+          <button
+            type="button"
+            class="check"
+            [class.checked]="item.is_checked"
+            (click)="toggle(item)"
+            [attr.aria-checked]="item.is_checked"
+            role="checkbox"
+          >
+            @if (item.is_checked) {
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path
+                  d="M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z"
+                  fill="currentColor"
+                />
+              </svg>
+            }
+          </button>
+
+          <div class="row-main">
+            <span class="row-title" [class.struck]="item.is_checked">{{ item.name }}</span>
+            <div class="row-actions">
+              <button
+                type="button"
+                class="action-btn"
+                (click)="openEdit($event, item)"
+              >
+                Editar
+              </button>
+              <button
+                type="button"
+                class="action-btn danger"
+                (click)="deleteItem($event, item)"
+                [disabled]="deletingId() === item.id"
+              >
+                Eliminar
+              </button>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            class="drag-handle"
+            cdkDragHandle
+            aria-label="Mover"
+          >
+            <span></span>
+            <span></span>
+          </button>
+        </div>
+      }
+    </div>
+  }
+
+  <form class="composer" (submit)="$event.preventDefault(); addItem()">
+    <input
+      type="text"
+      [(ngModel)]="newName"
+      name="newItem"
+      placeholder="Nuevo ítem"
+      autocomplete="off"
+      [disabled]="adding()"
+    />
+    <button
+      type="submit"
+      class="add-btn"
+      aria-label="Agregar ítem"
+      [disabled]="adding() || !newName.trim()"
+    >
+      +
+    </button>
+  </form>
+
+  @if (showEdit()) {
+    <div class="modal-backdrop" (click)="closeEdit()">
+      <div class="modal" (click)="$event.stopPropagation()">
+        <h2>Editar ítem</h2>
+        <input
+          type="text"
+          [(ngModel)]="editName"
+          name="editItem"
+          placeholder="Nombre"
+          autofocus
+          (keyup.enter)="saveEdit()"
+        />
+        <div class="modal-actions">
+          <button type="button" class="btn ghost" (click)="closeEdit()">Cancelar</button>
+          <button
+            type="button"
+            class="btn primary"
+            (click)="saveEdit()"
+            [disabled]="savingEdit() || !editName.trim()"
+          >
+            Guardar
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+</div>
