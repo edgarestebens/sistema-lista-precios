@@ -13,6 +13,13 @@ export interface Producto {
   created_at: string;
 }
 
+export interface Mercado {
+  id: string;
+  nombre: string;
+  user_id?: string;
+  created_at: string;
+}
+
 export interface Item {
   id: string;
   market_id: string;

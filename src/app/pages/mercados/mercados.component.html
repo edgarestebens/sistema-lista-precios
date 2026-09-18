@@ -1,0 +1,74 @@
+<div class="screen">
+  <header class="screen-header">
+    <a routerLink="/" class="back" aria-label="Volver">‹</a>
+    <h1>Mercados</h1>
+  </header>
+
+  @if (error()) {
+    <p class="error-banner">{{ error() }}</p>
+  }
+
+  @if (loading()) {
+    <p class="muted">Cargando…</p>
+  } @else if (mercados().length === 0) {
+    <p class="muted empty">No hay mercados. Toca + para agregar uno.</p>
+  } @else {
+    <div class="list">
+      @for (mercado of mercados(); track mercado.id) {
+        <div class="row">
+          <div class="row-main">
+            <span class="row-title">{{ mercado.nombre }}</span>
+            <div class="row-actions">
+              <button
+                type="button"
+                class="action-btn"
+                (click)="openEdit($event, mercado)"
+              >
+                Editar
+              </button>
+              <button
+                type="button"
+                class="action-btn danger"
+                (click)="deleteMercado($event, mercado)"
+                [disabled]="deletingId() === mercado.id"
+              >
+                Eliminar
+              </button>
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+  }
+
+  <button type="button" class="fab" (click)="openAdd()" aria-label="Agregar mercado">
+    +
+  </button>
+
+  @if (showForm()) {
+    <div class="modal-backdrop" (click)="closeForm()">
+      <div class="modal" (click)="$event.stopPropagation()">
+        <h2>{{ editingId() ? 'Editar mercado' : 'Nuevo mercado' }}</h2>
+        <input
+          type="text"
+          [(ngModel)]="formName"
+          name="mercadoNombre"
+          placeholder="Nombre"
+          autofocus
+          (keyup.enter)="saveMercado()"
+        />
+        <div class="modal-actions">
+          <button type="button" class="btn ghost" (click)="closeForm()">Cancelar</button>
+          <button
+            type="button"
+            class="btn primary"
+            (click)="saveMercado()"
+            [disabled]="saving() || !formName.trim()"
+          >
+            Guardar
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+</div>

@@ -53,6 +53,11 @@ export class MarketsComponent implements OnInit {
     void this.router.navigate(['/productos']);
   }
 
+  goMercados(): void {
+    this.closeMenu();
+    void this.router.navigate(['/mercados']);
+  }
+
   async logout(): Promise<void> {
     try {
       await this.auth.signOut();

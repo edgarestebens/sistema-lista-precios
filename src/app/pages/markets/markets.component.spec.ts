@@ -159,6 +159,14 @@ describe('MarketsComponent', () => {
     expect(component.showMenu()).toBeFalse();
   });
 
+  it('goMercados() navega a /mercados', async () => {
+    fixture.detectChanges();
+    await fixture.whenStable();
+    component.goMercados();
+    expect(router.navigate).toHaveBeenCalledWith(['/mercados']);
+    expect(component.showMenu()).toBeFalse();
+  });
+
   it('muestra error si list falla', async () => {
     marketsService.list.and.rejectWith(new Error('sin red'));
     fixture.detectChanges();
