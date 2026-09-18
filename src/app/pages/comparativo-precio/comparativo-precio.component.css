@@ -65,6 +65,138 @@
   font-size: 0.9rem;
 }
 
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.55rem;
+  margin-bottom: 0.85rem;
+}
+
+.search-wrap {
+  flex: 1 1 100%;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #1a1a1a;
+  border: 1px solid #333;
+  border-radius: 10px;
+  padding: 0.55rem 0.85rem;
+}
+
+.search-icon {
+  color: var(--text-muted);
+  display: flex;
+  flex-shrink: 0;
+}
+
+.search-input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  color: #fff;
+  font-size: 1rem;
+  padding: 0.25rem 0;
+  outline: none;
+}
+
+.search-input::placeholder {
+  color: var(--text-muted);
+}
+
+.toolbar .pager-size {
+  flex: 1 1 auto;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.toolbar .pager-size select {
+  background: #1a1a1a;
+  border: 1px solid #333;
+  border-radius: 6px;
+  color: #fff;
+  padding: 0.5rem 0.45rem;
+  font-size: 0.85rem;
+  max-width: 100%;
+}
+
+@media (min-width: 400px) {
+  .search-wrap {
+    flex: 1 1 auto;
+  }
+
+  .toolbar .pager-size {
+    flex: 0 0 auto;
+  }
+}
+
+.pager {
+  padding: 0.75rem 0.25rem 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.pager-top {
+  margin: 0 0 0.75rem;
+  padding-top: 0;
+  border-bottom: 1px solid #2a2a2a;
+  padding-bottom: 0.75rem;
+}
+
+.pager-bottom {
+  margin-top: 1rem;
+  border-top: 1px solid #2a2a2a;
+}
+
+.pager-info {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.pager-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+}
+
+.pager-btn {
+  border: 1px solid #333;
+  background: #1a1a1a;
+  color: #f0f0f0;
+  border-radius: 6px;
+  padding: 0.4rem 0.65rem;
+  font-size: 0.85rem;
+  cursor: pointer;
+  min-width: 2rem;
+}
+
+.pager-btn:hover:not(:disabled) {
+  border-color: #555;
+  background: #222;
+}
+
+.pager-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.pager-btn.page-num.active {
+  background: var(--fab);
+  border-color: var(--fab);
+  color: #fff;
+}
+
 .table-wrap {
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
@@ -96,11 +228,14 @@
 .col-producto {
   position: sticky;
   left: 0;
+  z-index: 1;
   background: var(--row-bg);
   font-weight: 600;
-  max-width: 7.5rem;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  min-width: 7.5rem;
+  max-width: 11rem;
+  white-space: normal;
+  word-break: break-word;
+  line-height: 1.35;
 }
 
 .col-precio {

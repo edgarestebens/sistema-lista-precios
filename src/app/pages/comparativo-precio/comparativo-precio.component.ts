@@ -32,6 +32,11 @@ export class ComparativoPrecioComponent implements OnInit {
   /** preciosPorMercado[mercadoId] = precio */
   preciosForm: Record<string, number> = {};
 
+  page = signal(1);
+  pageSize = signal(10);
+  searchQuery = signal('');
+  readonly pageSizeOptions = [5, 10, 25];
+
   readonly productosDisponibles = computed(() => {
     const usados = new Set(this.filas().map((f) => f.producto_id));
     return this.productos().filter((p) => !usados.has(p.id));
@@ -40,6 +45,53 @@ export class ComparativoPrecioComponent implements OnInit {
   readonly canCreate = computed(
     () => this.productos().length > 0 && this.mercados().length > 0
   );
+
+  readonly filasFiltradas = computed(() => {
+    const q = this.searchQuery().trim().toLocaleLowerCase('es');
+    if (!q) return this.filas();
+    return this.filas().filter((f) =>
+      f.producto_nombre.toLocaleLowerCase('es').includes(q)
+    );
+  });
+
+  readonly totalPages = computed(() => {
+    const total = this.filasFiltradas().length;
+    const size = this.pageSize();
+    return Math.max(1, Math.ceil(total / size) || 1);
+  });
+
+  readonly from = computed(() => {
+    const total = this.filasFiltradas().length;
+    if (total === 0) return 0;
+    return (this.page() - 1) * this.pageSize() + 1;
+  });
+
+  readonly to = computed(() => {
+    const total = this.filasFiltradas().length;
+    if (total === 0) return 0;
+    return Math.min(this.page() * this.pageSize(), total);
+  });
+
+  readonly filasPagina = computed(() => {
+    const size = this.pageSize();
+    const start = (this.page() - 1) * size;
+    return this.filasFiltradas().slice(start, start + size);
+  });
+
+  readonly pages = computed(() => {
+    const total = this.totalPages();
+    const current = this.page();
+    const windowSize = 5;
+    let start = Math.max(1, current - Math.floor(windowSize / 2));
+    let end = start + windowSize - 1;
+    if (end > total) {
+      end = total;
+      start = Math.max(1, end - windowSize + 1);
+    }
+    const list: number[] = [];
+    for (let i = start; i <= end; i++) list.push(i);
+    return list;
+  });
 
   constructor(
     private comparativoService: ComparativoPrecioService,
@@ -63,6 +115,7 @@ export class ComparativoPrecioComponent implements OnInit {
       this.filas.set(filas);
       this.productos.set(productos);
       this.mercados.set(mercados);
+      this.clampPage();
     } catch (e) {
       this.error.set(toSpanishError(e, 'Error al cargar'));
     } finally {
@@ -70,11 +123,42 @@ export class ComparativoPrecioComponent implements OnInit {
     }
   }
 
+  onSearchChange(value: string): void {
+    this.searchQuery.set(value);
+    this.page.set(1);
+  }
+
+  setPageSize(size: number | string): void {
+    const n = Number(size);
+    if (!this.pageSizeOptions.includes(n)) return;
+    this.pageSize.set(n);
+    this.page.set(1);
+  }
+
+  goToPage(p: number): void {
+    if (p < 1 || p > this.totalPages()) return;
+    this.page.set(p);
+  }
+
+  prevPage(): void {
+    this.goToPage(this.page() - 1);
+  }
+
+  nextPage(): void {
+    this.goToPage(this.page() + 1);
+  }
+
+  private clampPage(): void {
+    const max = this.totalPages();
+    if (this.page() > max) this.page.set(max);
+    if (this.page() < 1) this.page.set(1);
+  }
+
   precioDe(fila: ComparativoProducto, mercadoId: string): number {
     return fila.precios[mercadoId] ?? 0;
   }
 
-  /** 'barato' | 'caro' | null — ignora ceros; solo si hay al menos 2 precios > 0 distintos. */
+  /** 'barato' | 'caro' | null — ignora ceros; un solo precio > 0 cuenta como barato. */
   clasePrecio(fila: ComparativoProducto, mercadoId: string): string | null {
     const precio = this.precioDe(fila, mercadoId);
     if (precio <= 0) return null;
@@ -82,7 +166,8 @@ export class ComparativoPrecioComponent implements OnInit {
     const precios = this.mercados()
       .map((m) => this.precioDe(fila, m.id))
       .filter((p) => p > 0);
-    if (precios.length < 2) return null;
+
+    if (precios.length === 1) return 'barato';
 
     const min = Math.min(...precios);
     const max = Math.max(...precios);
@@ -186,6 +271,7 @@ export class ComparativoPrecioComponent implements OnInit {
       this.filas.update((list) =>
         list.filter((f) => f.producto_id !== fila.producto_id)
       );
+      this.clampPage();
     } catch (e) {
       this.error.set(toSpanishError(e, 'Error al eliminar'));
     } finally {

@@ -97,7 +97,7 @@ describe('ComparativoPrecioComponent', () => {
     expect(component.clasePrecio(filas[0], 'me2')).toBe('barato');
   });
 
-  it('clasePrecio() ignora ceros', async () => {
+  it('clasePrecio() marca en verde el único precio mayor a cero', async () => {
     fixture.detectChanges();
     await fixture.whenStable();
     const fila: ComparativoProducto = {
@@ -106,7 +106,7 @@ describe('ComparativoPrecioComponent', () => {
       precios: { me1: 0, me2: 1500 },
     };
     expect(component.clasePrecio(fila, 'me1')).toBeNull();
-    expect(component.clasePrecio(fila, 'me2')).toBeNull();
+    expect(component.clasePrecio(fila, 'me2')).toBe('barato');
   });
 
   it('save() exige elegir un producto', async () => {
@@ -143,5 +143,44 @@ describe('ComparativoPrecioComponent', () => {
     await component.deleteFila(new Event('click'), filas[0]);
     expect(comparativoService.removeByProducto).toHaveBeenCalledWith('p1');
     expect(component.filas().length).toBe(0);
+  });
+
+  it('filasPagina() hace slice según pageSize', async () => {
+    const muchas: ComparativoProducto[] = Array.from({ length: 12 }, (_, i) => ({
+      producto_id: `p${i}`,
+      producto_nombre: `Producto ${i}`,
+      precios: { me1: 1000 + i, me2: 900 + i },
+    }));
+    comparativoService.listGrouped.and.resolveTo(muchas);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    expect(component.filasPagina().length).toBe(10);
+    component.setPageSize(5);
+    expect(component.pageSize()).toBe(5);
+    expect(component.filasPagina().length).toBe(5);
+    expect(component.totalPages()).toBe(3);
+  });
+
+  it('onSearchChange() filtra por nombre de producto', async () => {
+    const varias: ComparativoProducto[] = [
+      {
+        producto_id: 'p1',
+        producto_nombre: 'Leche',
+        precios: { me1: 3000, me2: 2800 },
+      },
+      {
+        producto_id: 'p2',
+        producto_nombre: 'Arroz',
+        precios: { me1: 2000, me2: 1900 },
+      },
+    ];
+    comparativoService.listGrouped.and.resolveTo(varias);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    component.onSearchChange('arroz');
+    expect(component.filasFiltradas().map((f) => f.producto_id)).toEqual([
+      'p2',
+    ]);
+    expect(component.page()).toBe(1);
   });
 });
