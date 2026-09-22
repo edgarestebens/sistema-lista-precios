@@ -186,6 +186,14 @@ describe('MarketsComponent', () => {
     expect(component.showMenu()).toBeFalse();
   });
 
+  it('goParametros() navega a /parametros', async () => {
+    fixture.detectChanges();
+    await fixture.whenStable();
+    component.goParametros();
+    expect(router.navigate).toHaveBeenCalledWith(['/parametros']);
+    expect(component.showMenu()).toBeFalse();
+  });
+
   it('muestra error si list falla', async () => {
     marketsService.list.and.rejectWith(new Error('sin red'));
     fixture.detectChanges();

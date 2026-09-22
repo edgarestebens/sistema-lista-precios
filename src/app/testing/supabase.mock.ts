@@ -6,6 +6,7 @@ export type QueryChain = {
   delete: jasmine.Spy;
   eq: jasmine.Spy;
   order: jasmine.Spy;
+  limit: jasmine.Spy;
   single: jasmine.Spy;
   maybeSingle: jasmine.Spy;
   then: PromiseLike<unknown>['then'];
@@ -25,6 +26,7 @@ export function createQueryChain(result: {
     'delete',
     'eq',
     'order',
+    'limit',
     'single',
     'maybeSingle',
   ];

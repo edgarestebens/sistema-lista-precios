@@ -69,6 +69,11 @@ export class MarketsComponent implements OnInit {
     void this.router.navigate(['/gastos']);
   }
 
+  goParametros(): void {
+    this.closeMenu();
+    void this.router.navigate(['/parametros']);
+  }
+
   async logout(): Promise<void> {
     try {
       await this.auth.signOut();

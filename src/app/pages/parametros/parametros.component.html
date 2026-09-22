@@ -1,0 +1,34 @@
+<div class="screen">
+  <header class="screen-header">
+    <a routerLink="/" class="back" aria-label="Volver">‹</a>
+    <h1>Parámetros</h1>
+  </header>
+
+  @if (loading()) {
+    <p class="muted">Cargando…</p>
+  } @else {
+    <form class="form-card" (submit)="$event.preventDefault(); save()">
+      <label class="form-label" for="saldoGasto">Saldo gasto</label>
+      <input
+        id="saldoGasto"
+        type="number"
+        [(ngModel)]="formSaldoGasto"
+        name="saldoGasto"
+        placeholder="0"
+        min="0"
+        step="1"
+        inputmode="numeric"
+      />
+      <p class="hint">
+        Este valor se usa como base del saldo a favor en Gastos.
+      </p>
+      <button
+        type="submit"
+        class="btn primary"
+        [disabled]="saving() || !formValid"
+      >
+        Guardar
+      </button>
+    </form>
+  }
+</div>

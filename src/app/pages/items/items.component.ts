@@ -283,6 +283,11 @@ export class ItemsComponent implements OnInit {
     this.showMenu.set(false);
   }
 
+  goProductos(): void {
+    this.closeMenu();
+    void this.router.navigate(['/productos']);
+  }
+
   async sortAlphabetically(direction: 'asc' | 'desc'): Promise<void> {
     this.closeMenu();
     if (this.items().length < 2) return;

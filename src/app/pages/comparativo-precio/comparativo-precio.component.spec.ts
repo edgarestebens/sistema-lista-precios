@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { Router, provideRouter } from '@angular/router';
 import {
   ComparativoProducto,
   Mercado,
@@ -242,5 +242,16 @@ describe('ComparativoPrecioComponent', () => {
     await fixture.whenStable();
     component.onFilterMercadoChange('me1');
     expect(component.filasFiltradas().length).toBe(0);
+  });
+
+  it('goProductos() navega a /productos', async () => {
+    const router = TestBed.inject(Router);
+    spyOn(router, 'navigate').and.resolveTo(true);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    component.showMenu.set(true);
+    component.goProductos();
+    expect(router.navigate).toHaveBeenCalledWith(['/productos']);
+    expect(component.showMenu()).toBeFalse();
   });
 });

@@ -1,5 +1,5 @@
 import { Component, OnInit, computed, signal } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import {
   ComparativoProducto,
@@ -25,6 +25,7 @@ export class ComparativoPrecioComponent implements OnInit {
   mercados = signal<Mercado[]>([]);
   loading = signal(true);
   showForm = signal(false);
+  showMenu = signal(false);
   saving = signal(false);
   deletingId = signal<string | null>(null);
   editingProductoId = signal<string | null>(null);
@@ -102,11 +103,26 @@ export class ComparativoPrecioComponent implements OnInit {
     private comparativoService: ComparativoPrecioService,
     private productosService: ProductosService,
     private mercadosService: MercadosService,
-    private alert: AlertService
+    private alert: AlertService,
+    private router: Router
   ) {}
 
   async ngOnInit(): Promise<void> {
     await this.load();
+  }
+
+  toggleMenu(event?: Event): void {
+    event?.stopPropagation();
+    this.showMenu.update((open) => !open);
+  }
+
+  closeMenu(): void {
+    this.showMenu.set(false);
+  }
+
+  goProductos(): void {
+    this.closeMenu();
+    void this.router.navigate(['/productos']);
   }
 
   async load(): Promise<void> {

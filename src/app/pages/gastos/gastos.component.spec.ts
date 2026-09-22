@@ -1,15 +1,24 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
-import { Gasto } from '../../models/models';
+import { Gasto, Parametro } from '../../models/models';
 import { AlertService } from '../../services/alert.service';
 import { GastosService } from '../../services/gastos.service';
+import { ParametrosService } from '../../services/parametros.service';
 import { GastosComponent } from './gastos.component';
 
 describe('GastosComponent', () => {
   let fixture: ComponentFixture<GastosComponent>;
   let component: GastosComponent;
   let gastosService: jasmine.SpyObj<GastosService>;
+  let parametrosService: jasmine.SpyObj<ParametrosService>;
   let alertService: jasmine.SpyObj<AlertService>;
+
+  const parametro: Parametro = {
+    id: 'par1',
+    saldo_gasto: 600000,
+    created_at: '2026-09-01T00:00:00Z',
+    updated_at: '2026-09-01T00:00:00Z',
+  };
 
   const gastos: Gasto[] = [
     {
@@ -46,6 +55,11 @@ describe('GastosComponent', () => {
       'remove',
     ]);
     gastosService.list.and.resolveTo(gastos);
+    parametrosService = jasmine.createSpyObj<ParametrosService>(
+      'ParametrosService',
+      ['get']
+    );
+    parametrosService.get.and.resolveTo(parametro);
     alertService = jasmine.createSpyObj<AlertService>('AlertService', [
       'error',
       'warning',
@@ -60,6 +74,7 @@ describe('GastosComponent', () => {
       providers: [
         provideRouter([]),
         { provide: GastosService, useValue: gastosService },
+        { provide: ParametrosService, useValue: parametrosService },
         { provide: AlertService, useValue: alertService },
       ],
     }).compileComponents();
@@ -76,16 +91,16 @@ describe('GastosComponent', () => {
     expect(component.loading()).toBeFalse();
   });
 
-  it('aplica rango 1–15 si el día es menor a 15', () => {
+  it('aplica rango del 15 del mes al 15 del mes siguiente', () => {
     component.aplicarRangoPorDefecto(new Date(2026, 8, 10));
-    expect(component.fechaDesde()).toBe('2026-09-01');
-    expect(component.fechaHasta()).toBe('2026-09-15');
+    expect(component.fechaDesde()).toBe('2026-09-15');
+    expect(component.fechaHasta()).toBe('2026-10-15');
   });
 
-  it('aplica rango 15–fin de mes si el día es >= 15', () => {
-    component.aplicarRangoPorDefecto(new Date(2026, 8, 22));
-    expect(component.fechaDesde()).toBe('2026-09-15');
-    expect(component.fechaHasta()).toBe('2026-09-30');
+  it('cruza de año cuando el mes es diciembre', () => {
+    component.aplicarRangoPorDefecto(new Date(2026, 11, 22));
+    expect(component.fechaDesde()).toBe('2026-12-15');
+    expect(component.fechaHasta()).toBe('2027-01-15');
   });
 
   it('muestra conceptos en el template', async () => {
@@ -132,11 +147,12 @@ describe('GastosComponent', () => {
     expect(component.totalValor()).toBe(42000);
   });
 
-  it('saldoAFavor es base 600000 menos el total', async () => {
+  it('saldoAFavor usa saldo_gasto de parámetros menos el total', async () => {
     fixture.detectChanges();
     await fixture.whenStable();
     component.clearFechaFilter();
-    expect(component.basePresupuesto).toBe(600_000);
+    expect(parametrosService.get).toHaveBeenCalled();
+    expect(component.saldoGasto()).toBe(600_000);
     expect(component.saldoAFavor()).toBe(600_000 - 57000);
   });
 

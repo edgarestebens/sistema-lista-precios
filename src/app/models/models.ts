@@ -31,6 +31,13 @@ export interface Gasto {
   created_at: string;
 }
 
+export interface Parametro {
+  id: string;
+  saldo_gasto: number;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface ComparativoPrecio {
   id: string;
   producto_id: string;

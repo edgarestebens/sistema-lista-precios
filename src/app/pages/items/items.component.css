@@ -174,9 +174,10 @@
 
 .row-title {
   font-size: 1.02rem;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  line-height: 1.35;
 }
 
 .row-title.struck {

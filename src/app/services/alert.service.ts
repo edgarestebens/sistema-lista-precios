@@ -33,6 +33,16 @@ export class AlertService {
     }).then(() => undefined);
   }
 
+  success(message: string, title = 'Éxito'): Promise<void> {
+    return Swal.fire({
+      ...base,
+      icon: 'success',
+      title,
+      text: message,
+      confirmButtonText: 'Aceptar',
+    }).then(() => undefined);
+  }
+
   async confirmDelete(message: string, title = '¿Eliminar?'): Promise<boolean> {
     const result = await Swal.fire({
       ...base,

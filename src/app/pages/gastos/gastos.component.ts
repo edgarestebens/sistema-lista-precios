@@ -5,6 +5,7 @@ import { Gasto } from '../../models/models';
 import { toSpanishError } from '../../core/es-error';
 import { AlertService } from '../../services/alert.service';
 import { GastosService } from '../../services/gastos.service';
+import { ParametrosService } from '../../services/parametros.service';
 
 @Component({
   selector: 'app-gastos',
@@ -29,8 +30,8 @@ export class GastosComponent implements OnInit {
   fechaDesde = signal('');
   fechaHasta = signal('');
   readonly pageSizeOptions = [5, 10, 25];
-  /** Base de comparación para el saldo a favor. */
-  readonly basePresupuesto = 600_000;
+  /** Base de comparación para el saldo a favor (desde parámetros). */
+  saldoGasto = signal(600_000);
 
   readonly gastosFiltrados = computed(() => {
     const desde = this.fechaDesde().trim();
@@ -90,11 +91,12 @@ export class GastosComponent implements OnInit {
   );
 
   readonly saldoAFavor = computed(
-    () => this.basePresupuesto - this.totalValor()
+    () => this.saldoGasto() - this.totalValor()
   );
 
   constructor(
     private gastosService: GastosService,
+    private parametrosService: ParametrosService,
     private alert: AlertService
   ) {}
 
@@ -103,29 +105,28 @@ export class GastosComponent implements OnInit {
     await this.load();
   }
 
-  /** Antes del día 15: 1–15 del mes. Desde el 15: 15–último día del mes. */
+  /** Del 15 del mes actual al 15 del mes siguiente. */
   aplicarRangoPorDefecto(ref: Date = new Date()): void {
     const y = ref.getFullYear();
     const month = ref.getMonth();
-    const day = ref.getDate();
-    const iso = (d: number) =>
-      `${y}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+    const iso = (year: number, m: number, d: number) =>
+      `${year}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
 
-    if (day < 15) {
-      this.fechaDesde.set(iso(1));
-      this.fechaHasta.set(iso(15));
-    } else {
-      const lastDay = new Date(y, month + 1, 0).getDate();
-      this.fechaDesde.set(iso(15));
-      this.fechaHasta.set(iso(lastDay));
-    }
+    const next = new Date(y, month + 1, 15);
+    this.fechaDesde.set(iso(y, month, 15));
+    this.fechaHasta.set(iso(next.getFullYear(), next.getMonth(), 15));
     this.page.set(1);
   }
 
   async load(): Promise<void> {
     this.loading.set(true);
     try {
-      this.gastos.set(await this.gastosService.list());
+      const [gastos, parametro] = await Promise.all([
+        this.gastosService.list(),
+        this.parametrosService.get(),
+      ]);
+      this.gastos.set(gastos);
+      this.saldoGasto.set(Number(parametro.saldo_gasto) || 0);
       this.clampPage();
     } catch (e) {
       await this.alert.error(toSpanishError(e, 'Error al cargar'));

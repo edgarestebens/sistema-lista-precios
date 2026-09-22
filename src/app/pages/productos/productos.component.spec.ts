@@ -261,4 +261,13 @@ describe('ProductosComponent', () => {
     await component.deleteProducto(new Event('click'), productos[0]);
     expect(productosService.remove).not.toHaveBeenCalled();
   });
+
+  it('goComparativo() navega a /comparativo-precio', async () => {
+    fixture.detectChanges();
+    await fixture.whenStable();
+    component.showMenu.set(true);
+    component.goComparativo();
+    expect(router.navigate).toHaveBeenCalledWith(['/comparativo-precio']);
+    expect(component.showMenu()).toBeFalse();
+  });
 });

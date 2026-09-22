@@ -46,6 +46,64 @@
   min-width: 0;
 }
 
+.menu-wrap {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.menu-btn {
+  width: 2.25rem;
+  height: 2.25rem;
+  border: none;
+  background: transparent;
+  color: #fff;
+  font-size: 1.35rem;
+  line-height: 1;
+  cursor: pointer;
+  border-radius: 8px;
+}
+
+.menu-btn:hover {
+  background: #222;
+}
+
+.menu-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+}
+
+.menu-panel {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 0.25rem;
+  min-width: 11rem;
+  background: #1c1c1c;
+  border: 1px solid #333;
+  border-radius: 10px;
+  padding: 0.35rem;
+  z-index: 50;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+}
+
+.menu-panel button {
+  display: block;
+  width: 100%;
+  border: none;
+  background: transparent;
+  color: #f0f0f0;
+  text-align: left;
+  padding: 0.7rem 0.85rem;
+  border-radius: 7px;
+  cursor: pointer;
+  font-size: 0.95rem;
+}
+
+.menu-panel button:hover {
+  background: #2a2a2a;
+}
+
 .muted {
   color: var(--text-muted);
   padding: 1rem 0.5rem;

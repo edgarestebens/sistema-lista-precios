@@ -311,6 +311,15 @@ describe('ItemsComponent', () => {
     expect(router.navigate).toHaveBeenCalledWith(['/']);
   });
 
+  it('goProductos() navega a /productos', async () => {
+    fixture.detectChanges();
+    await fixture.whenStable();
+    component.showMenu.set(true);
+    component.goProductos();
+    expect(router.navigate).toHaveBeenCalledWith(['/productos']);
+    expect(component.showMenu()).toBeFalse();
+  });
+
   it('productosDisponibles() filtra por lista y oculta ya agregados', async () => {
     fixture.detectChanges();
     await fixture.whenStable();
