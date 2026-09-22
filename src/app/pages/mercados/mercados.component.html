@@ -4,10 +4,6 @@
     <h1>Mercados</h1>
   </header>
 
-  @if (error()) {
-    <p class="error-banner">{{ error() }}</p>
-  }
-
   @if (loading()) {
     <p class="muted">Cargando…</p>
   } @else if (mercados().length === 0) {
@@ -46,8 +42,8 @@
   </button>
 
   @if (showForm()) {
-    <div class="modal-backdrop" (click)="closeForm()">
-      <div class="modal" (click)="$event.stopPropagation()">
+    <div class="modal-backdrop">
+      <div class="modal">
         <h2>{{ editingId() ? 'Editar mercado' : 'Nuevo mercado' }}</h2>
         <input
           type="text"

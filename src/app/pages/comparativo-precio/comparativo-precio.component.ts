@@ -7,6 +7,7 @@ import {
   Producto,
 } from '../../models/models';
 import { toSpanishError } from '../../core/es-error';
+import { AlertService } from '../../services/alert.service';
 import { ComparativoPrecioService } from '../../services/comparativo-precio.service';
 import { MercadosService } from '../../services/mercados.service';
 import { ProductosService } from '../../services/productos.service';
@@ -23,7 +24,6 @@ export class ComparativoPrecioComponent implements OnInit {
   productos = signal<Producto[]>([]);
   mercados = signal<Mercado[]>([]);
   loading = signal(true);
-  error = signal<string | null>(null);
   showForm = signal(false);
   saving = signal(false);
   deletingId = signal<string | null>(null);
@@ -101,7 +101,8 @@ export class ComparativoPrecioComponent implements OnInit {
   constructor(
     private comparativoService: ComparativoPrecioService,
     private productosService: ProductosService,
-    private mercadosService: MercadosService
+    private mercadosService: MercadosService,
+    private alert: AlertService
   ) {}
 
   async ngOnInit(): Promise<void> {
@@ -110,7 +111,6 @@ export class ComparativoPrecioComponent implements OnInit {
 
   async load(): Promise<void> {
     this.loading.set(true);
-    this.error.set(null);
     try {
       const [filas, productos, mercados] = await Promise.all([
         this.comparativoService.listGrouped(),
@@ -122,7 +122,7 @@ export class ComparativoPrecioComponent implements OnInit {
       this.mercados.set(mercados);
       this.clampPage();
     } catch (e) {
-      this.error.set(toSpanishError(e, 'Error al cargar'));
+      await this.alert.error(toSpanishError(e, 'Error al cargar'));
     } finally {
       this.loading.set(false);
     }
@@ -201,15 +201,15 @@ export class ComparativoPrecioComponent implements OnInit {
     });
   }
 
-  openAdd(): void {
+  async openAdd(): Promise<void> {
     if (!this.canCreate()) {
-      this.error.set(
+      await this.alert.warning(
         'Necesitas al menos un producto y un mercado en el catálogo.'
       );
       return;
     }
     if (this.productosDisponibles().length === 0) {
-      this.error.set('Todos los productos ya tienen comparativo.');
+      await this.alert.warning('Todos los productos ya tienen comparativo.');
       return;
     }
     this.editingProductoId.set(null);
@@ -218,7 +218,6 @@ export class ComparativoPrecioComponent implements OnInit {
     for (const m of this.mercados()) {
       this.preciosForm[m.id] = 0;
     }
-    this.error.set(null);
     this.showForm.set(true);
   }
 
@@ -230,7 +229,6 @@ export class ComparativoPrecioComponent implements OnInit {
     for (const m of this.mercados()) {
       this.preciosForm[m.id] = this.precioDe(fila, m.id);
     }
-    this.error.set(null);
     this.showForm.set(true);
   }
 
@@ -245,16 +243,15 @@ export class ComparativoPrecioComponent implements OnInit {
     if (this.saving()) return;
     const productoId = this.editingProductoId() ?? this.selectedProductoId.trim();
     if (!productoId) {
-      this.error.set('Debes elegir un producto.');
+      await this.alert.warning('Debes elegir un producto.');
       return;
     }
     if (this.mercados().length === 0) {
-      this.error.set('No hay mercados registrados.');
+      await this.alert.warning('No hay mercados registrados.');
       return;
     }
 
     this.saving.set(true);
-    this.error.set(null);
     try {
       const precios = this.mercados().map((m) => ({
         mercado_id: m.id,
@@ -264,7 +261,7 @@ export class ComparativoPrecioComponent implements OnInit {
       await this.load();
       this.closeForm();
     } catch (e) {
-      this.error.set(toSpanishError(e, 'Error al guardar'));
+      await this.alert.error(toSpanishError(e, 'Error al guardar'));
     } finally {
       this.saving.set(false);
     }
@@ -272,9 +269,10 @@ export class ComparativoPrecioComponent implements OnInit {
 
   async deleteFila(event: Event, fila: ComparativoProducto): Promise<void> {
     event.stopPropagation();
-    if (!confirm(`¿Eliminar el comparativo de "${fila.producto_nombre}"?`)) {
-      return;
-    }
+    const ok = await this.alert.confirmDelete(
+      `¿Eliminar el comparativo de "${fila.producto_nombre}"?`
+    );
+    if (!ok) return;
     this.deletingId.set(fila.producto_id);
     try {
       await this.comparativoService.removeByProducto(fila.producto_id);
@@ -283,7 +281,7 @@ export class ComparativoPrecioComponent implements OnInit {
       );
       this.clampPage();
     } catch (e) {
-      this.error.set(toSpanishError(e, 'Error al eliminar'));
+      await this.alert.error(toSpanishError(e, 'Error al eliminar'));
     } finally {
       this.deletingId.set(null);
     }

@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 import { Market } from '../../models/models';
+import { AlertService } from '../../services/alert.service';
 import { AuthService } from '../../services/auth.service';
 import { MarketsService } from '../../services/markets.service';
 import { MarketsComponent } from './markets.component';
@@ -10,6 +11,7 @@ describe('MarketsComponent', () => {
   let component: MarketsComponent;
   let marketsService: jasmine.SpyObj<MarketsService>;
   let authService: jasmine.SpyObj<AuthService>;
+  let alertService: jasmine.SpyObj<AlertService>;
   let router: Router;
 
   const markets: Market[] = [
@@ -37,6 +39,14 @@ describe('MarketsComponent', () => {
     ]);
     marketsService.list.and.resolveTo(markets);
     authService = jasmine.createSpyObj<AuthService>('AuthService', ['signOut']);
+    alertService = jasmine.createSpyObj<AlertService>('AlertService', [
+      'error',
+      'warning',
+      'confirmDelete',
+    ]);
+    alertService.error.and.resolveTo();
+    alertService.warning.and.resolveTo();
+    alertService.confirmDelete.and.resolveTo(true);
 
     await TestBed.configureTestingModule({
       imports: [MarketsComponent],
@@ -44,6 +54,7 @@ describe('MarketsComponent', () => {
         provideRouter([]),
         { provide: MarketsService, useValue: marketsService },
         { provide: AuthService, useValue: authService },
+        { provide: AlertService, useValue: alertService },
       ],
     }).compileComponents();
 
@@ -115,7 +126,7 @@ describe('MarketsComponent', () => {
   it('deleteMarket() elimina tras confirmar', async () => {
     fixture.detectChanges();
     await fixture.whenStable();
-    spyOn(window, 'confirm').and.returnValue(true);
+    alertService.confirmDelete.and.resolveTo(true);
     marketsService.remove.and.resolveTo();
     const event = new Event('click');
     await component.deleteMarket(event, markets[0]);
@@ -126,7 +137,7 @@ describe('MarketsComponent', () => {
   it('deleteMarket() no elimina si se cancela', async () => {
     fixture.detectChanges();
     await fixture.whenStable();
-    spyOn(window, 'confirm').and.returnValue(false);
+    alertService.confirmDelete.and.resolveTo(false);
     await component.deleteMarket(new Event('click'), markets[0]);
     expect(marketsService.remove).not.toHaveBeenCalled();
   });
@@ -179,6 +190,6 @@ describe('MarketsComponent', () => {
     marketsService.list.and.rejectWith(new Error('sin red'));
     fixture.detectChanges();
     await fixture.whenStable();
-    expect(component.error()).toBeTruthy();
+    expect(alertService.error).toHaveBeenCalled();
   });
 });

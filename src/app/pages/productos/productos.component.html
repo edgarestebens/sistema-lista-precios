@@ -4,10 +4,6 @@
     <h1>Productos</h1>
   </header>
 
-  @if (error()) {
-    <p class="error-banner">{{ error() }}</p>
-  }
-
   @if (!loading() && productos().length > 0) {
     <div class="toolbar">
       <div class="search-wrap">
@@ -180,8 +176,8 @@
   </button>
 
   @if (showForm()) {
-    <div class="modal-backdrop" (click)="closeForm()">
-      <div class="modal" (click)="$event.stopPropagation()">
+    <div class="modal-backdrop">
+      <div class="modal">
         <h2>{{ editingId() ? 'Editar producto' : 'Nuevo producto' }}</h2>
         <label class="form-label" for="listaSelect">Lista</label>
         <select

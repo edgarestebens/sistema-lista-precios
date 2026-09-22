@@ -5,6 +5,7 @@ import {
   Mercado,
   Producto,
 } from '../../models/models';
+import { AlertService } from '../../services/alert.service';
 import { ComparativoPrecioService } from '../../services/comparativo-precio.service';
 import { MercadosService } from '../../services/mercados.service';
 import { ProductosService } from '../../services/productos.service';
@@ -16,6 +17,7 @@ describe('ComparativoPrecioComponent', () => {
   let comparativoService: jasmine.SpyObj<ComparativoPrecioService>;
   let productosService: jasmine.SpyObj<ProductosService>;
   let mercadosService: jasmine.SpyObj<MercadosService>;
+  let alertService: jasmine.SpyObj<AlertService>;
 
   const productos: Producto[] = [
     { id: 'p1', nombre: 'Leche', created_at: '2026-01-01T00:00:00Z' },
@@ -46,6 +48,14 @@ describe('ComparativoPrecioComponent', () => {
     mercadosService = jasmine.createSpyObj<MercadosService>('MercadosService', [
       'list',
     ]);
+    alertService = jasmine.createSpyObj<AlertService>('AlertService', [
+      'error',
+      'warning',
+      'confirmDelete',
+    ]);
+    alertService.error.and.resolveTo();
+    alertService.warning.and.resolveTo();
+    alertService.confirmDelete.and.resolveTo(true);
 
     comparativoService.listGrouped.and.resolveTo(filas);
     productosService.list.and.resolveTo(productos);
@@ -58,6 +68,7 @@ describe('ComparativoPrecioComponent', () => {
         { provide: ComparativoPrecioService, useValue: comparativoService },
         { provide: ProductosService, useValue: productosService },
         { provide: MercadosService, useValue: mercadosService },
+        { provide: AlertService, useValue: alertService },
       ],
     }).compileComponents();
 
@@ -112,11 +123,13 @@ describe('ComparativoPrecioComponent', () => {
   it('save() exige elegir un producto', async () => {
     fixture.detectChanges();
     await fixture.whenStable();
-    component.openAdd();
+    await component.openAdd();
     component.selectedProductoId = '';
     await component.save();
     expect(comparativoService.saveForProducto).not.toHaveBeenCalled();
-    expect(component.error()).toBe('Debes elegir un producto.');
+    expect(alertService.warning).toHaveBeenCalledWith(
+      'Debes elegir un producto.'
+    );
   });
 
   it('save() guarda precios por mercado', async () => {
@@ -124,7 +137,7 @@ describe('ComparativoPrecioComponent', () => {
     await fixture.whenStable();
     comparativoService.saveForProducto.and.resolveTo();
     comparativoService.listGrouped.and.resolveTo(filas);
-    component.openAdd();
+    await component.openAdd();
     component.selectedProductoId = 'p2';
     component.preciosForm = { me1: 1500, me2: 0 };
     await component.save();
@@ -138,7 +151,7 @@ describe('ComparativoPrecioComponent', () => {
   it('deleteFila() elimina tras confirmar', async () => {
     fixture.detectChanges();
     await fixture.whenStable();
-    spyOn(window, 'confirm').and.returnValue(true);
+    alertService.confirmDelete.and.resolveTo(true);
     comparativoService.removeByProducto.and.resolveTo();
     await component.deleteFila(new Event('click'), filas[0]);
     expect(comparativoService.removeByProducto).toHaveBeenCalledWith('p1');

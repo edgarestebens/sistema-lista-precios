@@ -8,6 +8,7 @@ import {
 import { FormsModule } from '@angular/forms';
 import { Item, Market, PrecioMasBarato, Producto } from '../../models/models';
 import { toSpanishError } from '../../core/es-error';
+import { AlertService } from '../../services/alert.service';
 import { ComparativoPrecioService } from '../../services/comparativo-precio.service';
 import { ItemsService } from '../../services/items.service';
 import { MarketsService } from '../../services/markets.service';
@@ -26,12 +27,15 @@ export class ItemsComponent implements OnInit {
   productos = signal<Producto[]>([]);
   preciosBaratos = signal<Record<string, PrecioMasBarato>>({});
   loading = signal(true);
-  error = signal<string | null>(null);
   selectedProductoId = '';
   deletingId = signal<string | null>(null);
   togglingAll = signal(false);
   showMenu = signal(false);
   adding = signal(false);
+  showForm = signal(false);
+  editingItem = signal<Item | null>(null);
+  formName = '';
+  saving = signal(false);
   private marketId = '';
 
   readonly allChecked = computed(
@@ -52,7 +56,8 @@ export class ItemsComponent implements OnInit {
     private itemsService: ItemsService,
     private marketsService: MarketsService,
     private productosService: ProductosService,
-    private comparativoService: ComparativoPrecioService
+    private comparativoService: ComparativoPrecioService,
+    private alert: AlertService
   ) {}
 
   async ngOnInit(): Promise<void> {
@@ -66,7 +71,6 @@ export class ItemsComponent implements OnInit {
 
   async load(): Promise<void> {
     this.loading.set(true);
-    this.error.set(null);
     try {
       const market = await this.marketsService.getById(this.marketId);
       if (!market) {
@@ -83,7 +87,7 @@ export class ItemsComponent implements OnInit {
       this.productos.set(productos);
       this.preciosBaratos.set(preciosBaratos);
     } catch (e) {
-      this.error.set(toSpanishError(e, 'Error al cargar'));
+      await this.alert.error(toSpanishError(e, 'Error al cargar'));
     } finally {
       this.loading.set(false);
     }
@@ -115,7 +119,7 @@ export class ItemsComponent implements OnInit {
       this.selectedProductoId = '';
       await this.itemsService.reorder(this.items());
     } catch (e) {
-      this.error.set(toSpanishError(e, 'Error al agregar'));
+      await this.alert.error(toSpanishError(e, 'Error al agregar'));
     } finally {
       this.adding.set(false);
     }
@@ -145,7 +149,7 @@ export class ItemsComponent implements OnInit {
       await this.itemsService.toggleChecked(item.id, next);
       await this.itemsService.reorder(list);
     } catch (e) {
-      this.error.set(toSpanishError(e, 'Error al tachar'));
+      await this.alert.error(toSpanishError(e, 'Error al tachar'));
       await this.load();
     }
   }
@@ -177,21 +181,81 @@ export class ItemsComponent implements OnInit {
       );
       await this.itemsService.reorder(list);
     } catch (e) {
-      this.error.set(toSpanishError(e, 'Error al seleccionar todo'));
+      await this.alert.error(toSpanishError(e, 'Error al seleccionar todo'));
       await this.load();
     } finally {
       this.togglingAll.set(false);
     }
   }
 
+  openEdit(event: Event, item: Item): void {
+    event.stopPropagation();
+    event.preventDefault();
+    this.editingItem.set(item);
+    this.formName = item.nombre;
+    this.showForm.set(true);
+  }
+
+  closeForm(): void {
+    this.showForm.set(false);
+    this.formName = '';
+    this.editingItem.set(null);
+  }
+
+  private nombreYaExiste(nombre: string, excludeProductoId: string): boolean {
+    const normalized = nombre.trim().toLocaleLowerCase('es');
+    return this.productos().some(
+      (p) =>
+        p.id !== excludeProductoId &&
+        p.nombre.trim().toLocaleLowerCase('es') === normalized
+    );
+  }
+
+  async saveProductoNombre(): Promise<void> {
+    const item = this.editingItem();
+    const nombre = this.formName.trim();
+    if (!item || !nombre || this.saving()) return;
+
+    if (this.nombreYaExiste(nombre, item.producto_id)) {
+      await this.alert.warning('Ese producto ya existe en la lista.');
+      return;
+    }
+
+    this.saving.set(true);
+    try {
+      await this.productosService.update(
+        item.producto_id,
+        nombre,
+        this.marketId
+      );
+      this.items.update((list) =>
+        list.map((i) =>
+          i.producto_id === item.producto_id ? { ...i, nombre } : i
+        )
+      );
+      this.productos.update((list) =>
+        list.map((p) => (p.id === item.producto_id ? { ...p, nombre } : p))
+      );
+      this.closeForm();
+    } catch (e) {
+      await this.alert.error(toSpanishError(e, 'Error al guardar'));
+    } finally {
+      this.saving.set(false);
+    }
+  }
+
   async deleteItem(event: Event, item: Item): Promise<void> {
     event.stopPropagation();
+    const ok = await this.alert.confirmDelete(
+      `¿Eliminar "${item.nombre}" de la lista?`
+    );
+    if (!ok) return;
     this.deletingId.set(item.id);
     try {
       await this.itemsService.remove(item.id);
       this.items.update((list) => list.filter((i) => i.id !== item.id));
     } catch (e) {
-      this.error.set(toSpanishError(e, 'Error al eliminar'));
+      await this.alert.error(toSpanishError(e, 'Error al eliminar'));
     } finally {
       this.deletingId.set(null);
     }
@@ -205,7 +269,7 @@ export class ItemsComponent implements OnInit {
     try {
       await this.itemsService.reorder(list);
     } catch (e) {
-      this.error.set(toSpanishError(e, 'Error al ordenar'));
+      await this.alert.error(toSpanishError(e, 'Error al ordenar'));
       await this.load();
     }
   }
@@ -239,7 +303,7 @@ export class ItemsComponent implements OnInit {
     try {
       await this.itemsService.reorder(list);
     } catch (e) {
-      this.error.set(toSpanishError(e, 'Error al ordenar'));
+      await this.alert.error(toSpanishError(e, 'Error al ordenar'));
       await this.load();
     }
   }

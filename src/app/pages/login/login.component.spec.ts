@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
+import { AlertService } from '../../services/alert.service';
 import { AuthService } from '../../services/auth.service';
 import { LoginComponent } from './login.component';
 
@@ -7,16 +8,25 @@ describe('LoginComponent', () => {
   let fixture: ComponentFixture<LoginComponent>;
   let component: LoginComponent;
   let auth: jasmine.SpyObj<AuthService>;
+  let alertService: jasmine.SpyObj<AlertService>;
   let router: Router;
 
   beforeEach(async () => {
     auth = jasmine.createSpyObj<AuthService>('AuthService', ['signIn', 'signOut']);
+    alertService = jasmine.createSpyObj<AlertService>('AlertService', [
+      'error',
+      'warning',
+      'confirmDelete',
+    ]);
+    alertService.error.and.resolveTo();
+    alertService.warning.and.resolveTo();
 
     await TestBed.configureTestingModule({
       imports: [LoginComponent],
       providers: [
         provideRouter([]),
         { provide: AuthService, useValue: auth },
+        { provide: AlertService, useValue: alertService },
       ],
     }).compileComponents();
 
@@ -41,6 +51,8 @@ describe('LoginComponent', () => {
     component.email = 'a@b.com';
     component.password = 'mala';
     await component.submit();
-    expect(component.error()).toBe('Email o contraseña incorrectos');
+    expect(alertService.error).toHaveBeenCalledWith(
+      'Email o contraseña incorrectos'
+    );
   });
 });

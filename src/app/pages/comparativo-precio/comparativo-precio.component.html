@@ -4,10 +4,6 @@
     <h1>Comparativo de precio</h1>
   </header>
 
-  @if (error()) {
-    <p class="error-banner">{{ error() }}</p>
-  }
-
   @if (!loading() && filas().length > 0) {
     <div class="toolbar">
       <div class="search-wrap">
@@ -209,15 +205,11 @@
   </button>
 
   @if (showForm()) {
-    <div class="modal-backdrop" (click)="closeForm()">
-      <div class="modal" (click)="$event.stopPropagation()">
+    <div class="modal-backdrop">
+      <div class="modal">
         <h2>
           {{ editingProductoId() ? 'Editar comparativo' : 'Nuevo comparativo' }}
         </h2>
-
-        @if (error()) {
-          <p class="error-banner">{{ error() }}</p>
-        }
 
         @if (editingProductoId()) {
           <p class="form-label">

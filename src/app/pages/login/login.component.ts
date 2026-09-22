@@ -2,6 +2,7 @@ import { Component, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { toSpanishError } from '../../core/es-error';
+import { AlertService } from '../../services/alert.service';
 import { AuthService } from '../../services/auth.service';
 
 @Component({
@@ -15,28 +16,27 @@ export class LoginComponent {
   email = '';
   password = '';
   loading = signal(false);
-  error = signal<string | null>(null);
 
   constructor(
     private auth: AuthService,
-    private router: Router
+    private router: Router,
+    private alert: AlertService
   ) {}
 
   async submit(): Promise<void> {
     const email = this.email.trim();
     const password = this.password;
     if (!email || !password) {
-      this.error.set('Completa email y contraseña');
+      await this.alert.warning('Completa email y contraseña');
       return;
     }
 
     this.loading.set(true);
-    this.error.set(null);
     try {
       await this.auth.signIn(email, password);
       await this.router.navigateByUrl('/');
     } catch (e) {
-      this.error.set(toSpanishError(e, 'No se pudo iniciar sesión'));
+      await this.alert.error(toSpanishError(e, 'No se pudo iniciar sesión'));
     } finally {
       this.loading.set(false);
     }

@@ -3,6 +3,7 @@ import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { Market, Producto } from '../../models/models';
 import { toSpanishError } from '../../core/es-error';
+import { AlertService } from '../../services/alert.service';
 import { MarketsService } from '../../services/markets.service';
 import { ProductosService } from '../../services/productos.service';
 
@@ -17,7 +18,6 @@ export class ProductosComponent implements OnInit {
   productos = signal<Producto[]>([]);
   markets = signal<Market[]>([]);
   loading = signal(true);
-  error = signal<string | null>(null);
   showForm = signal(false);
   formName = '';
   formMarketId = '';
@@ -89,7 +89,8 @@ export class ProductosComponent implements OnInit {
 
   constructor(
     private productosService: ProductosService,
-    private marketsService: MarketsService
+    private marketsService: MarketsService,
+    private alert: AlertService
   ) {}
 
   async ngOnInit(): Promise<void> {
@@ -98,7 +99,6 @@ export class ProductosComponent implements OnInit {
 
   async load(): Promise<void> {
     this.loading.set(true);
-    this.error.set(null);
     try {
       const [productos, markets] = await Promise.all([
         this.productosService.list(),
@@ -108,7 +108,7 @@ export class ProductosComponent implements OnInit {
       this.markets.set(markets);
       this.clampPage();
     } catch (e) {
-      this.error.set(toSpanishError(e, 'Error al cargar'));
+      await this.alert.error(toSpanishError(e, 'Error al cargar'));
     } finally {
       this.loading.set(false);
     }
@@ -154,7 +154,6 @@ export class ProductosComponent implements OnInit {
     this.editingId.set(null);
     this.formName = '';
     this.formMarketId = '';
-    this.error.set(null);
     this.showForm.set(true);
   }
 
@@ -164,7 +163,6 @@ export class ProductosComponent implements OnInit {
     this.editingId.set(producto.id);
     this.formName = producto.nombre;
     this.formMarketId = producto.market_id ?? '';
-    this.error.set(null);
     this.showForm.set(true);
   }
 
@@ -193,16 +191,15 @@ export class ProductosComponent implements OnInit {
     const marketId = this.formMarketId.trim();
     if (!nombre || this.saving()) return;
     if (!marketId) {
-      this.error.set('Debes elegir una lista.');
+      await this.alert.warning('Debes elegir una lista.');
       return;
     }
     const editId = this.editingId();
     if (this.nombreYaExiste(nombre, editId)) {
-      this.error.set('Ese producto ya existe en la lista.');
+      await this.alert.warning('Ese producto ya existe en la lista.');
       return;
     }
     this.saving.set(true);
-    this.error.set(null);
     try {
       if (editId) {
         await this.productosService.update(editId, nombre, marketId);
@@ -229,7 +226,7 @@ export class ProductosComponent implements OnInit {
       this.clampPage();
       this.closeForm();
     } catch (e) {
-      this.error.set(toSpanishError(e, 'Error al guardar'));
+      await this.alert.error(toSpanishError(e, 'Error al guardar'));
     } finally {
       this.saving.set(false);
     }
@@ -238,14 +235,17 @@ export class ProductosComponent implements OnInit {
   async deleteProducto(event: Event, producto: Producto): Promise<void> {
     event.stopPropagation();
     event.preventDefault();
-    if (!confirm(`¿Eliminar el producto "${producto.nombre}"?`)) return;
+    const ok = await this.alert.confirmDelete(
+      `¿Eliminar el producto "${producto.nombre}"?`
+    );
+    if (!ok) return;
     this.deletingId.set(producto.id);
     try {
       await this.productosService.remove(producto.id);
       this.productos.update((list) => list.filter((p) => p.id !== producto.id));
       this.clampPage();
     } catch (e) {
-      this.error.set(toSpanishError(e, 'Error al eliminar'));
+      await this.alert.error(toSpanishError(e, 'Error al eliminar'));
     } finally {
       this.deletingId.set(null);
     }

@@ -26,10 +26,6 @@
     </div>
   </header>
 
-  @if (error()) {
-    <p class="error-banner">{{ error() }}</p>
-  }
-
   @if (loading()) {
     <p class="muted">Cargando…</p>
   } @else if (items().length === 0) {
@@ -93,6 +89,13 @@
             <div class="row-actions">
               <button
                 type="button"
+                class="action-btn"
+                (click)="openEdit($event, item)"
+              >
+                Editar
+              </button>
+              <button
+                type="button"
                 class="action-btn danger"
                 (click)="deleteItem($event, item)"
                 [disabled]="deletingId() === item.id"
@@ -145,4 +148,33 @@
       +
     </button>
   </form>
+
+  @if (showForm()) {
+    <div class="modal-backdrop">
+      <div class="modal">
+        <h2>Editar producto</h2>
+        <input
+          type="text"
+          [(ngModel)]="formName"
+          name="editProductoNombre"
+          placeholder="Nombre"
+          autofocus
+          (keyup.enter)="saveProductoNombre()"
+        />
+        <div class="modal-actions">
+          <button type="button" class="btn ghost" (click)="closeForm()">
+            Cancelar
+          </button>
+          <button
+            type="button"
+            class="btn primary"
+            (click)="saveProductoNombre()"
+            [disabled]="saving() || !formName.trim()"
+          >
+            Guardar
+          </button>
+        </div>
+      </div>
+    </div>
+  }
 </div>

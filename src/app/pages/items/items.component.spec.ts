@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap, provideRouter, Router } from '@angular/router';
 import { Item, Market, PrecioMasBarato, Producto } from '../../models/models';
+import { AlertService } from '../../services/alert.service';
 import { ComparativoPrecioService } from '../../services/comparativo-precio.service';
 import { ItemsService } from '../../services/items.service';
 import { MarketsService } from '../../services/markets.service';
@@ -14,6 +15,7 @@ describe('ItemsComponent', () => {
   let marketsService: jasmine.SpyObj<MarketsService>;
   let productosService: jasmine.SpyObj<ProductosService>;
   let comparativoService: jasmine.SpyObj<ComparativoPrecioService>;
+  let alertService: jasmine.SpyObj<AlertService>;
   let router: Router;
 
   const market: Market = {
@@ -94,11 +96,20 @@ describe('ItemsComponent', () => {
     ]);
     productosService = jasmine.createSpyObj<ProductosService>('ProductosService', [
       'list',
+      'update',
     ]);
     comparativoService = jasmine.createSpyObj<ComparativoPrecioService>(
       'ComparativoPrecioService',
       ['mapPrecioMasBarato']
     );
+    alertService = jasmine.createSpyObj<AlertService>('AlertService', [
+      'error',
+      'warning',
+      'confirmDelete',
+    ]);
+    alertService.error.and.resolveTo();
+    alertService.warning.and.resolveTo();
+    alertService.confirmDelete.and.resolveTo(true);
 
     marketsService.getById.and.resolveTo(market);
     itemsService.listByMarket.and.resolveTo(items);
@@ -113,6 +124,7 @@ describe('ItemsComponent', () => {
         { provide: MarketsService, useValue: marketsService },
         { provide: ProductosService, useValue: productosService },
         { provide: ComparativoPrecioService, useValue: comparativoService },
+        { provide: AlertService, useValue: alertService },
         {
           provide: ActivatedRoute,
           useValue: {
@@ -208,10 +220,49 @@ describe('ItemsComponent', () => {
   it('deleteItem() quita el ítem de la lista', async () => {
     fixture.detectChanges();
     await fixture.whenStable();
+    alertService.confirmDelete.and.resolveTo(true);
     itemsService.remove.and.resolveTo();
     await component.deleteItem(new Event('click'), items[0]);
+    expect(alertService.confirmDelete).toHaveBeenCalled();
     expect(itemsService.remove).toHaveBeenCalledWith('i1');
     expect(component.items().find((i) => i.id === 'i1')).toBeUndefined();
+  });
+
+  it('deleteItem() no elimina si se cancela', async () => {
+    fixture.detectChanges();
+    await fixture.whenStable();
+    alertService.confirmDelete.and.resolveTo(false);
+    await component.deleteItem(new Event('click'), items[0]);
+    expect(itemsService.remove).not.toHaveBeenCalled();
+  });
+
+  it('saveProductoNombre() edita el nombre del producto', async () => {
+    fixture.detectChanges();
+    await fixture.whenStable();
+    productosService.update.and.resolveTo();
+    component.openEdit(new Event('click'), items[0]);
+    component.formName = 'Leche entera';
+    await component.saveProductoNombre();
+    expect(productosService.update).toHaveBeenCalledWith('p1', 'Leche entera', 'm1');
+    expect(component.items().find((i) => i.id === 'i1')?.nombre).toBe(
+      'Leche entera'
+    );
+    expect(component.productos().find((p) => p.id === 'p1')?.nombre).toBe(
+      'Leche entera'
+    );
+    expect(component.showForm()).toBeFalse();
+  });
+
+  it('saveProductoNombre() no renombra a un nombre ya usado', async () => {
+    fixture.detectChanges();
+    await fixture.whenStable();
+    component.openEdit(new Event('click'), items[0]);
+    component.formName = 'Arroz';
+    await component.saveProductoNombre();
+    expect(productosService.update).not.toHaveBeenCalled();
+    expect(alertService.warning).toHaveBeenCalledWith(
+      'Ese producto ya existe en la lista.'
+    );
   });
 
   it('drop() reordena ítems', async () => {

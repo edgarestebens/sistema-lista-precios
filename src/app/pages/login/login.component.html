@@ -3,10 +3,6 @@
     <h1>Lista de Mercado M y E</h1>
     <p class="subtitle">Inicia sesión para ver tus listas</p>
 
-    @if (error()) {
-      <p class="error-banner">{{ error() }}</p>
-    }
-
     <form (submit)="$event.preventDefault(); submit()">
       <label>
         Email

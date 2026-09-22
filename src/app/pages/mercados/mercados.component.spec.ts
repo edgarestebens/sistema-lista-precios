@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 import { Mercado } from '../../models/models';
+import { AlertService } from '../../services/alert.service';
 import { MercadosService } from '../../services/mercados.service';
 import { MercadosComponent } from './mercados.component';
 
@@ -8,6 +9,7 @@ describe('MercadosComponent', () => {
   let fixture: ComponentFixture<MercadosComponent>;
   let component: MercadosComponent;
   let mercadosService: jasmine.SpyObj<MercadosService>;
+  let alertService: jasmine.SpyObj<AlertService>;
   let router: Router;
 
   const mercados: Mercado[] = [
@@ -31,12 +33,21 @@ describe('MercadosComponent', () => {
       'remove',
     ]);
     mercadosService.list.and.resolveTo(mercados);
+    alertService = jasmine.createSpyObj<AlertService>('AlertService', [
+      'error',
+      'warning',
+      'confirmDelete',
+    ]);
+    alertService.error.and.resolveTo();
+    alertService.warning.and.resolveTo();
+    alertService.confirmDelete.and.resolveTo(true);
 
     await TestBed.configureTestingModule({
       imports: [MercadosComponent],
       providers: [
         provideRouter([]),
         { provide: MercadosService, useValue: mercadosService },
+        { provide: AlertService, useValue: alertService },
       ],
     }).compileComponents();
 
@@ -88,7 +99,9 @@ describe('MercadosComponent', () => {
     component.formName = ' éxito ';
     await component.saveMercado();
     expect(mercadosService.create).not.toHaveBeenCalled();
-    expect(component.error()).toBe('Ese mercado ya existe en la lista.');
+    expect(alertService.warning).toHaveBeenCalledWith(
+      'Ese mercado ya existe en la lista.'
+    );
     expect(component.showForm()).toBeTrue();
   });
 
@@ -99,7 +112,9 @@ describe('MercadosComponent', () => {
     component.formName = 'D1';
     await component.saveMercado();
     expect(mercadosService.rename).not.toHaveBeenCalled();
-    expect(component.error()).toBe('Ese mercado ya existe en la lista.');
+    expect(alertService.warning).toHaveBeenCalledWith(
+      'Ese mercado ya existe en la lista.'
+    );
   });
 
   it('saveMercado() edita el nombre', async () => {
@@ -118,7 +133,7 @@ describe('MercadosComponent', () => {
   it('deleteMercado() elimina tras confirmar', async () => {
     fixture.detectChanges();
     await fixture.whenStable();
-    spyOn(window, 'confirm').and.returnValue(true);
+    alertService.confirmDelete.and.resolveTo(true);
     mercadosService.remove.and.resolveTo();
     await component.deleteMercado(new Event('click'), mercados[0]);
     expect(mercadosService.remove).toHaveBeenCalledWith('m1');
@@ -128,7 +143,7 @@ describe('MercadosComponent', () => {
   it('deleteMercado() no elimina si se cancela', async () => {
     fixture.detectChanges();
     await fixture.whenStable();
-    spyOn(window, 'confirm').and.returnValue(false);
+    alertService.confirmDelete.and.resolveTo(false);
     await component.deleteMercado(new Event('click'), mercados[0]);
     expect(mercadosService.remove).not.toHaveBeenCalled();
   });

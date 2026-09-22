@@ -8,6 +8,7 @@ import {
 import { FormsModule } from '@angular/forms';
 import { Market } from '../../models/models';
 import { toSpanishError } from '../../core/es-error';
+import { AlertService } from '../../services/alert.service';
 import { AuthService } from '../../services/auth.service';
 import { MarketsService } from '../../services/markets.service';
 
@@ -21,7 +22,6 @@ import { MarketsService } from '../../services/markets.service';
 export class MarketsComponent implements OnInit {
   markets = signal<Market[]>([]);
   loading = signal(true);
-  error = signal<string | null>(null);
   showForm = signal(false);
   formName = '';
   editingId = signal<string | null>(null);
@@ -32,7 +32,8 @@ export class MarketsComponent implements OnInit {
   constructor(
     private marketsService: MarketsService,
     private auth: AuthService,
-    private router: Router
+    private router: Router,
+    private alert: AlertService
   ) {}
 
   async ngOnInit(): Promise<void> {
@@ -68,17 +69,16 @@ export class MarketsComponent implements OnInit {
       await this.auth.signOut();
       await this.router.navigateByUrl('/login');
     } catch (e) {
-      this.error.set(toSpanishError(e, 'Error al salir'));
+      await this.alert.error(toSpanishError(e, 'Error al salir'));
     }
   }
 
   async load(): Promise<void> {
     this.loading.set(true);
-    this.error.set(null);
     try {
       this.markets.set(await this.marketsService.list());
     } catch (e) {
-      this.error.set(toSpanishError(e, 'Error al cargar'));
+      await this.alert.error(toSpanishError(e, 'Error al cargar'));
     } finally {
       this.loading.set(false);
     }
@@ -121,7 +121,7 @@ export class MarketsComponent implements OnInit {
       }
       this.closeForm();
     } catch (e) {
-      this.error.set(toSpanishError(e, 'Error al guardar'));
+      await this.alert.error(toSpanishError(e, 'Error al guardar'));
     } finally {
       this.saving.set(false);
     }
@@ -130,13 +130,16 @@ export class MarketsComponent implements OnInit {
   async deleteMarket(event: Event, market: Market): Promise<void> {
     event.stopPropagation();
     event.preventDefault();
-    if (!confirm(`¿Eliminar "${market.name}" y todos sus ítems?`)) return;
+    const ok = await this.alert.confirmDelete(
+      `¿Eliminar "${market.name}" y todos sus ítems?`
+    );
+    if (!ok) return;
     this.deletingId.set(market.id);
     try {
       await this.marketsService.remove(market.id);
       this.markets.update((list) => list.filter((m) => m.id !== market.id));
     } catch (e) {
-      this.error.set(toSpanishError(e, 'Error al eliminar'));
+      await this.alert.error(toSpanishError(e, 'Error al eliminar'));
     } finally {
       this.deletingId.set(null);
     }
@@ -154,7 +157,7 @@ export class MarketsComponent implements OnInit {
     try {
       await this.marketsService.reorder(list);
     } catch (e) {
-      this.error.set(toSpanishError(e, 'Error al ordenar'));
+      await this.alert.error(toSpanishError(e, 'Error al ordenar'));
       await this.load();
     }
   }

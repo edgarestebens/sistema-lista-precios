@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 import { Market, Producto } from '../../models/models';
+import { AlertService } from '../../services/alert.service';
 import { MarketsService } from '../../services/markets.service';
 import { ProductosService } from '../../services/productos.service';
 import { ProductosComponent } from './productos.component';
@@ -10,6 +11,7 @@ describe('ProductosComponent', () => {
   let component: ProductosComponent;
   let productosService: jasmine.SpyObj<ProductosService>;
   let marketsService: jasmine.SpyObj<MarketsService>;
+  let alertService: jasmine.SpyObj<AlertService>;
   let router: Router;
 
   const markets: Market[] = [
@@ -64,6 +66,14 @@ describe('ProductosComponent', () => {
     marketsService = jasmine.createSpyObj<MarketsService>('MarketsService', [
       'list',
     ]);
+    alertService = jasmine.createSpyObj<AlertService>('AlertService', [
+      'error',
+      'warning',
+      'confirmDelete',
+    ]);
+    alertService.error.and.resolveTo();
+    alertService.warning.and.resolveTo();
+    alertService.confirmDelete.and.resolveTo(true);
     productosService.list.and.resolveTo(productos);
     marketsService.list.and.resolveTo(markets);
 
@@ -73,6 +83,7 @@ describe('ProductosComponent', () => {
         provideRouter([]),
         { provide: ProductosService, useValue: productosService },
         { provide: MarketsService, useValue: marketsService },
+        { provide: AlertService, useValue: alertService },
       ],
     }).compileComponents();
 
@@ -179,7 +190,7 @@ describe('ProductosComponent', () => {
     component.formMarketId = '';
     await component.saveProducto();
     expect(productosService.create).not.toHaveBeenCalled();
-    expect(component.error()).toBe('Debes elegir una lista.');
+    expect(alertService.warning).toHaveBeenCalledWith('Debes elegir una lista.');
   });
 
   it('saveProducto() agrega con lista y cierra el modal', async () => {
@@ -210,7 +221,9 @@ describe('ProductosComponent', () => {
     component.formMarketId = 'm1';
     await component.saveProducto();
     expect(productosService.create).not.toHaveBeenCalled();
-    expect(component.error()).toBe('Ese producto ya existe en la lista.');
+    expect(alertService.warning).toHaveBeenCalledWith(
+      'Ese producto ya existe en la lista.'
+    );
   });
 
   it('saveProducto() edita nombre y lista', async () => {
@@ -234,7 +247,7 @@ describe('ProductosComponent', () => {
   it('deleteProducto() elimina tras confirmar', async () => {
     fixture.detectChanges();
     await fixture.whenStable();
-    spyOn(window, 'confirm').and.returnValue(true);
+    alertService.confirmDelete.and.resolveTo(true);
     productosService.remove.and.resolveTo();
     await component.deleteProducto(new Event('click'), productos[0]);
     expect(productosService.remove).toHaveBeenCalledWith('p1');
@@ -244,7 +257,7 @@ describe('ProductosComponent', () => {
   it('deleteProducto() no elimina si se cancela', async () => {
     fixture.detectChanges();
     await fixture.whenStable();
-    spyOn(window, 'confirm').and.returnValue(false);
+    alertService.confirmDelete.and.resolveTo(false);
     await component.deleteProducto(new Event('click'), productos[0]);
     expect(productosService.remove).not.toHaveBeenCalled();
   });
