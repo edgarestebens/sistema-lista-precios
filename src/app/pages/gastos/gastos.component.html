@@ -1,0 +1,226 @@
+<div class="screen">
+  <header class="screen-header">
+    <a routerLink="/" class="back" aria-label="Volver">‹</a>
+    <h1>Gastos</h1>
+  </header>
+
+  @if (!loading() && gastos().length > 0) {
+    <div class="toolbar">
+      <div class="date-filters">
+        <label class="date-field">
+          Desde
+          <input
+            type="date"
+            [ngModel]="fechaDesde()"
+            (ngModelChange)="onFechaDesdeChange($event)"
+            name="fechaDesde"
+            aria-label="Fecha desde"
+          />
+        </label>
+        <label class="date-field">
+          Hasta
+          <input
+            type="date"
+            [ngModel]="fechaHasta()"
+            (ngModelChange)="onFechaHastaChange($event)"
+            name="fechaHasta"
+            aria-label="Fecha hasta"
+          />
+        </label>
+        @if (rangoActivo()) {
+          <button type="button" class="btn-clear" (click)="clearFechaFilter()">
+            Limpiar
+          </button>
+        }
+      </div>
+      <label class="pager-size">
+        Por página
+        <select
+          [ngModel]="pageSize()"
+          (ngModelChange)="setPageSize($event)"
+          name="pageSize"
+        >
+          @for (opt of pageSizeOptions; track opt) {
+            <option [ngValue]="opt">{{ opt }}</option>
+          }
+        </select>
+      </label>
+    </div>
+
+    <div class="total-bar" aria-live="polite">
+      <div class="total-row">
+        <span class="total-label">Total</span>
+        <span class="total-value">{{ formatValor(totalValor()) }}</span>
+      </div>
+      <div class="total-row">
+        <span class="total-label">Saldo a favor</span>
+        <span class="saldo-value">{{ formatValor(saldoAFavor()) }}</span>
+      </div>
+    </div>
+  }
+
+  @if (loading()) {
+    <p class="muted">Cargando…</p>
+  } @else if (gastos().length === 0) {
+    <p class="muted empty">No hay gastos. Toca + para agregar uno.</p>
+  } @else if (gastosFiltrados().length === 0) {
+    <p class="muted empty">No hay gastos en el rango de fechas seleccionado.</p>
+  } @else {
+    <div class="pager pager-top">
+      <p class="pager-info">
+        Mostrando {{ from() }}–{{ to() }} de {{ gastosFiltrados().length }}
+      </p>
+      <div class="pager-controls">
+        <button
+          type="button"
+          class="pager-btn"
+          (click)="prevPage()"
+          [disabled]="page() <= 1"
+          aria-label="Página anterior"
+        >
+          ‹
+        </button>
+        @for (p of pages(); track p) {
+          <button
+            type="button"
+            class="pager-btn page-num"
+            [class.active]="p === page()"
+            (click)="goToPage(p)"
+            [attr.aria-current]="p === page() ? 'page' : null"
+          >
+            {{ p }}
+          </button>
+        }
+        <button
+          type="button"
+          class="pager-btn"
+          (click)="nextPage()"
+          [disabled]="page() >= totalPages()"
+          aria-label="Página siguiente"
+        >
+          ›
+        </button>
+      </div>
+    </div>
+
+    <div class="list">
+      @for (gasto of gastosPagina(); track gasto.id) {
+        <div class="row">
+          <div class="row-main">
+            <div class="row-text">
+              <span class="row-title">{{ gasto.concepto }}</span>
+              <span class="row-meta">
+                {{ formatFecha(gasto.fecha) }} ·
+                <span class="row-valor">{{ formatValor(gasto.valor) }}</span>
+              </span>
+            </div>
+            <div class="row-actions">
+              <button
+                type="button"
+                class="action-btn"
+                (click)="openEdit($event, gasto)"
+              >
+                Editar
+              </button>
+              <button
+                type="button"
+                class="action-btn danger"
+                (click)="deleteGasto($event, gasto)"
+                [disabled]="deletingId() === gasto.id"
+              >
+                Eliminar
+              </button>
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+
+    <div class="pager pager-bottom">
+      <p class="pager-info">
+        Mostrando {{ from() }}–{{ to() }} de {{ gastosFiltrados().length }}
+      </p>
+      <div class="pager-controls">
+        <button
+          type="button"
+          class="pager-btn"
+          (click)="prevPage()"
+          [disabled]="page() <= 1"
+          aria-label="Página anterior"
+        >
+          ‹
+        </button>
+        @for (p of pages(); track p) {
+          <button
+            type="button"
+            class="pager-btn page-num"
+            [class.active]="p === page()"
+            (click)="goToPage(p)"
+            [attr.aria-current]="p === page() ? 'page' : null"
+          >
+            {{ p }}
+          </button>
+        }
+        <button
+          type="button"
+          class="pager-btn"
+          (click)="nextPage()"
+          [disabled]="page() >= totalPages()"
+          aria-label="Página siguiente"
+        >
+          ›
+        </button>
+      </div>
+    </div>
+  }
+
+  <button type="button" class="fab" (click)="openAdd()" aria-label="Agregar gasto">
+    +
+  </button>
+
+  @if (showForm()) {
+    <div class="modal-backdrop">
+      <div class="modal">
+        <h2>{{ editingId() ? 'Editar gasto' : 'Nuevo gasto' }}</h2>
+        <label class="form-label" for="gastoFecha">Fecha</label>
+        <input
+          id="gastoFecha"
+          type="date"
+          [(ngModel)]="formFecha"
+          name="gastoFecha"
+        />
+        <label class="form-label" for="gastoValor">Valor</label>
+        <input
+          id="gastoValor"
+          type="number"
+          [(ngModel)]="formValor"
+          name="gastoValor"
+          placeholder="0"
+          min="0"
+          step="1"
+        />
+        <label class="form-label" for="gastoConcepto">Concepto</label>
+        <input
+          id="gastoConcepto"
+          type="text"
+          [(ngModel)]="formConcepto"
+          name="gastoConcepto"
+          placeholder="Concepto"
+          autofocus
+          (keyup.enter)="saveGasto()"
+        />
+        <div class="modal-actions">
+          <button type="button" class="btn ghost" (click)="closeForm()">Cancelar</button>
+          <button
+            type="button"
+            class="btn primary"
+            (click)="saveGasto()"
+            [disabled]="saving() || !formValid"
+          >
+            Guardar
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+</div>

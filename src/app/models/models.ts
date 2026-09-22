@@ -22,6 +22,15 @@ export interface Mercado {
   created_at: string;
 }
 
+export interface Gasto {
+  id: string;
+  fecha: string;
+  valor: number;
+  concepto: string;
+  user_id?: string;
+  created_at: string;
+}
+
 export interface ComparativoPrecio {
   id: string;
   producto_id: string;

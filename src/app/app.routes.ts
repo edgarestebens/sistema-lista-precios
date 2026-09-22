@@ -5,6 +5,7 @@ import { LoginComponent } from './pages/login/login.component';
 import { ProductosComponent } from './pages/productos/productos.component';
 import { MercadosComponent } from './pages/mercados/mercados.component';
 import { ComparativoPrecioComponent } from './pages/comparativo-precio/comparativo-precio.component';
+import { GastosComponent } from './pages/gastos/gastos.component';
 import { authGuard, guestGuard } from './guards/auth.guard';
 
 export const routes: Routes = [
@@ -17,6 +18,7 @@ export const routes: Routes = [
     component: ComparativoPrecioComponent,
     canActivate: [authGuard],
   },
+  { path: 'gastos', component: GastosComponent, canActivate: [authGuard] },
   { path: 'mercados/:id', component: ItemsComponent, canActivate: [authGuard] },
   { path: '**', redirectTo: '' },
 ];
