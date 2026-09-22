@@ -1,11 +1,13 @@
 import { TestBed } from '@angular/core/testing';
 import { SUPABASE_CLIENT } from '../core/supabase.client';
 import { createQueryChain, createSupabaseMock } from '../testing/supabase.mock';
+import { ItemsService } from './items.service';
 import { ProductosService } from './productos.service';
 
 describe('ProductosService', () => {
   let service: ProductosService;
   let fromSpy: jasmine.Spy;
+  let itemsService: jasmine.SpyObj<ItemsService>;
 
   const sampleRows = [
     {
@@ -29,9 +31,23 @@ describe('ProductosService', () => {
       createQueryChain({ data: sampleRows, error: null })
     );
     fromSpy = supabase.from;
+    itemsService = jasmine.createSpyObj<ItemsService>('ItemsService', ['create']);
+    itemsService.create.and.resolveTo({
+      id: 'i1',
+      market_id: 'm1',
+      producto_id: 'p3',
+      nombre: 'Pan',
+      is_checked: false,
+      position: 0,
+      created_at: '2026-01-02T00:00:00Z',
+    });
 
     TestBed.configureTestingModule({
-      providers: [ProductosService, { provide: SUPABASE_CLIENT, useValue: supabase }],
+      providers: [
+        ProductosService,
+        { provide: SUPABASE_CLIENT, useValue: supabase },
+        { provide: ItemsService, useValue: itemsService },
+      ],
     });
     service = TestBed.inject(ProductosService);
   });
@@ -47,7 +63,7 @@ describe('ProductosService', () => {
     expect(result[0].market_id).toBe('m1');
   });
 
-  it('create() inserta nombre y market_id', async () => {
+  it('create() inserta nombre, market_id y lo agrega a la lista', async () => {
     let insertPayload: unknown;
     const created = {
       id: 'p3',
@@ -69,6 +85,7 @@ describe('ProductosService', () => {
     expect(insertPayload).toEqual({ nombre: 'Pan', market_id: 'm1' });
     expect(producto.nombre).toBe('Pan');
     expect(producto.market_id).toBe('m1');
+    expect(itemsService.create).toHaveBeenCalledWith('m1', 'p3');
   });
 
   it('update() actualiza nombre y market_id', async () => {

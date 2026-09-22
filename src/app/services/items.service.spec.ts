@@ -70,19 +70,26 @@ describe('ItemsService', () => {
     expect(fromSpy).toHaveBeenCalledWith('items');
     expect(chain.select).toHaveBeenCalledWith('*, producto:producto_id(nombre)');
     expect(chain.eq).toHaveBeenCalledWith('market_id', 'm1');
+    expect(chain.order).toHaveBeenCalledWith('is_checked', { ascending: true });
+    expect(chain.order).toHaveBeenCalledWith('position', { ascending: true });
     expect(result).toEqual(sampleItems);
   });
 
-  it('create() inserta con producto_id', async () => {
+  it('create() inserta al inicio de los no chuleados', async () => {
     let insertPayload: unknown;
+    let call = 0;
     fromSpy.and.callFake(() => {
+      call += 1;
+      if (call === 1) {
+        return createQueryChain({ data: sampleRows, error: null });
+      }
       const chain = createQueryChain({
         data: {
           id: 'i3',
           market_id: 'm1',
           producto_id: 'p3',
           is_checked: false,
-          position: 2,
+          position: 0,
           created_at: '2026-01-02T00:00:00Z',
           producto: { nombre: 'Pan' },
         },
@@ -92,9 +99,6 @@ describe('ItemsService', () => {
         insertPayload = payload;
         return chain;
       });
-      chain.order.and.returnValue(
-        Promise.resolve({ data: sampleRows, error: null })
-      );
       return chain;
     });
 
@@ -102,11 +106,12 @@ describe('ItemsService', () => {
     expect(insertPayload).toEqual({
       market_id: 'm1',
       producto_id: 'p3',
-      position: 2,
+      position: 0,
       is_checked: false,
     });
     expect(item.nombre).toBe('Pan');
     expect(item.producto_id).toBe('p3');
+    expect(item.position).toBe(0);
   });
 
   it('toggleChecked() actualiza is_checked', async () => {

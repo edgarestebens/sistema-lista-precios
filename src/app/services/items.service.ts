@@ -23,6 +23,7 @@ export class ItemsService {
       .from('items')
       .select('*, producto:producto_id(nombre)')
       .eq('market_id', marketId)
+      .order('is_checked', { ascending: true })
       .order('position', { ascending: true });
 
     if (error) throw error;
@@ -31,21 +32,24 @@ export class ItemsService {
 
   async create(marketId: string, productoId: string): Promise<Item> {
     const items = await this.listByMarket(marketId);
-    const position = items.length;
+    const pending = items.filter((i) => !i.is_checked);
+    const done = items.filter((i) => i.is_checked);
 
     const { data, error } = await this.supabase
       .from('items')
       .insert({
         market_id: marketId,
         producto_id: productoId,
-        position,
+        position: 0,
         is_checked: false,
       })
       .select('*, producto:producto_id(nombre)')
       .single();
 
     if (error) throw error;
-    return this.mapRow(data as ItemRow);
+    const created = this.mapRow(data as ItemRow);
+    await this.reorder([created, ...pending, ...done]);
+    return { ...created, position: 0 };
   }
 
   async remove(id: string): Promise<void> {

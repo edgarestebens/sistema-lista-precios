@@ -2,6 +2,7 @@ import { Inject, Injectable } from '@angular/core';
 import { SupabaseClient } from '@supabase/supabase-js';
 import { SUPABASE_CLIENT } from '../core/supabase.client';
 import { Producto } from '../models/models';
+import { ItemsService } from './items.service';
 
 type ProductoRow = Producto & {
   markets?: { name: string } | null;
@@ -9,7 +10,10 @@ type ProductoRow = Producto & {
 
 @Injectable({ providedIn: 'root' })
 export class ProductosService {
-  constructor(@Inject(SUPABASE_CLIENT) private readonly supabase: SupabaseClient) {}
+  constructor(
+    @Inject(SUPABASE_CLIENT) private readonly supabase: SupabaseClient,
+    private readonly itemsService: ItemsService
+  ) {}
 
   async list(): Promise<Producto[]> {
     const { data, error } = await this.supabase
@@ -29,7 +33,9 @@ export class ProductosService {
       .single();
 
     if (error) throw error;
-    return this.mapRow(data as ProductoRow);
+    const producto = this.mapRow(data as ProductoRow);
+    await this.itemsService.create(marketId, producto.id);
+    return producto;
   }
 
   async update(id: string, nombre: string, marketId: string): Promise<void> {

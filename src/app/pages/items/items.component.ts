@@ -110,7 +110,7 @@ export class ItemsComponent implements OnInit {
       this.items.update((list) => {
         const pending = list.filter((i) => !i.is_checked);
         const done = list.filter((i) => i.is_checked);
-        return [...pending, item, ...done];
+        return [item, ...pending, ...done];
       });
       this.selectedProductoId = '';
       await this.itemsService.reorder(this.items());
