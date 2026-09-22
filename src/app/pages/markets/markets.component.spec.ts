@@ -194,6 +194,14 @@ describe('MarketsComponent', () => {
     expect(component.showMenu()).toBeFalse();
   });
 
+  it('goGraficosGastos() navega a /graficos-gastos', async () => {
+    fixture.detectChanges();
+    await fixture.whenStable();
+    component.goGraficosGastos();
+    expect(router.navigate).toHaveBeenCalledWith(['/graficos-gastos']);
+    expect(component.showMenu()).toBeFalse();
+  });
+
   it('muestra error si list falla', async () => {
     marketsService.list.and.rejectWith(new Error('sin red'));
     fixture.detectChanges();

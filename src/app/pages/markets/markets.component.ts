@@ -69,6 +69,11 @@ export class MarketsComponent implements OnInit {
     void this.router.navigate(['/gastos']);
   }
 
+  goGraficosGastos(): void {
+    this.closeMenu();
+    void this.router.navigate(['/graficos-gastos']);
+  }
+
   goParametros(): void {
     this.closeMenu();
     void this.router.navigate(['/parametros']);

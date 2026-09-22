@@ -7,6 +7,7 @@ import { MercadosComponent } from './pages/mercados/mercados.component';
 import { ComparativoPrecioComponent } from './pages/comparativo-precio/comparativo-precio.component';
 import { GastosComponent } from './pages/gastos/gastos.component';
 import { ParametrosComponent } from './pages/parametros/parametros.component';
+import { GraficosGastosComponent } from './pages/graficos-gastos/graficos-gastos.component';
 import { authGuard, guestGuard } from './guards/auth.guard';
 
 export const routes: Routes = [
@@ -21,6 +22,11 @@ export const routes: Routes = [
   },
   { path: 'gastos', component: GastosComponent, canActivate: [authGuard] },
   { path: 'parametros', component: ParametrosComponent, canActivate: [authGuard] },
+  {
+    path: 'graficos-gastos',
+    component: GraficosGastosComponent,
+    canActivate: [authGuard],
+  },
   { path: 'mercados/:id', component: ItemsComponent, canActivate: [authGuard] },
   { path: '**', redirectTo: '' },
 ];

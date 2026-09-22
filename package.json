@@ -20,6 +20,8 @@
     "@angular/platform-browser-dynamic": "^19.2.0",
     "@angular/router": "^19.2.0",
     "@supabase/supabase-js": "^2.116.0",
+    "chart.js": "^4.5.1",
+    "ng2-charts": "^8.0.0",
     "rxjs": "~7.8.0",
     "sweetalert2": "^11.26.25",
     "tslib": "^2.3.0",

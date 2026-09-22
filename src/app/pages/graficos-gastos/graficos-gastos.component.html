@@ -1,0 +1,93 @@
+<div class="screen">
+  <header class="screen-header">
+    <a routerLink="/" class="back" aria-label="Volver">‹</a>
+    <h1>Gráficos de gastos</h1>
+  </header>
+
+  @if (!loading()) {
+    <div class="toolbar">
+      <div class="date-filters">
+        <label class="date-field">
+          Desde
+          <input
+            type="date"
+            [ngModel]="fechaDesde()"
+            (ngModelChange)="onFechaDesdeChange($event)"
+            name="fechaDesdeGraf"
+            aria-label="Fecha desde"
+          />
+        </label>
+        <label class="date-field">
+          Hasta
+          <input
+            type="date"
+            [ngModel]="fechaHasta()"
+            (ngModelChange)="onFechaHastaChange($event)"
+            name="fechaHastaGraf"
+            aria-label="Fecha hasta"
+          />
+        </label>
+        @if (rangoActivo()) {
+          <button type="button" class="btn-clear" (click)="clearFechaFilter()">
+            Limpiar
+          </button>
+        }
+      </div>
+    </div>
+
+    <div class="summary" aria-live="polite">
+      <div class="summary-row">
+        <span>Total</span>
+        <strong>{{ formatValor(totalValor()) }}</strong>
+      </div>
+      <div class="summary-row">
+        <span>Saldo gasto</span>
+        <strong>{{ formatValor(saldoGasto()) }}</strong>
+      </div>
+    </div>
+  }
+
+  @if (loading()) {
+    <p class="muted">Cargando…</p>
+  } @else if (gastos().length === 0) {
+    <p class="muted empty">No hay gastos para graficar.</p>
+  } @else if (gastosFiltrados().length === 0) {
+    <p class="muted empty">No hay gastos en el rango de fechas seleccionado.</p>
+  } @else {
+    <section class="chart-card">
+      <h2>Por día</h2>
+      <div class="chart-wrap">
+        <canvas
+          baseChart
+          [type]="'bar'"
+          [data]="barDiaData()"
+          [options]="barOptions"
+        ></canvas>
+      </div>
+    </section>
+
+    <section class="chart-card">
+      <h2>Por concepto</h2>
+      <div class="chart-wrap chart-wrap-donut">
+        <canvas
+          baseChart
+          [type]="'doughnut'"
+          [data]="conceptoData()"
+          [options]="doughnutOptions"
+        ></canvas>
+      </div>
+    </section>
+
+    <section class="chart-card">
+      <h2>Gastado vs saldo</h2>
+      <div class="chart-wrap chart-wrap-donut">
+        <canvas
+          baseChart
+          [type]="'doughnut'"
+          [data]="saldoData()"
+          [options]="doughnutOptions"
+        ></canvas>
+      </div>
+    </section>
+  }
+</div>

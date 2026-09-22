@@ -1,0 +1,160 @@
+:host {
+  display: block;
+  min-height: 100%;
+}
+
+.screen {
+  max-width: 480px;
+  margin: 0 auto;
+  min-height: 100dvh;
+  padding: 1rem 0.75rem 2rem;
+  position: relative;
+}
+
+.screen-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 0.25rem 1.25rem;
+}
+
+.back {
+  width: 2.25rem;
+  height: 2.25rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  color: #fff;
+  font-size: 1.75rem;
+  line-height: 1;
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+
+.back:hover {
+  background: #222;
+}
+
+.screen-header h1 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  color: #ffffff;
+  flex: 1;
+  min-width: 0;
+}
+
+.muted {
+  color: var(--text-muted);
+  padding: 1rem 0.5rem;
+  text-align: center;
+}
+
+.empty {
+  margin-top: 3rem;
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.55rem;
+  margin-bottom: 0.85rem;
+}
+
+.date-filters {
+  flex: 1 1 100%;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.5rem;
+}
+
+.date-field {
+  flex: 1 1 8rem;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.date-field input {
+  background: #1a1a1a;
+  border: 1px solid #333;
+  border-radius: 6px;
+  color: #fff;
+  padding: 0.5rem 0.45rem;
+  font-size: 0.85rem;
+  width: 100%;
+  box-sizing: border-box;
+  color-scheme: dark;
+}
+
+.btn-clear {
+  border: 1px solid #333;
+  background: #1a1a1a;
+  color: #f0f0f0;
+  border-radius: 6px;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.btn-clear:hover {
+  border-color: #555;
+  background: #222;
+}
+
+.summary {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 0.75rem 0.85rem;
+  margin-bottom: 1rem;
+  background: #1a1a1a;
+  border: 1px solid #2a2a2a;
+  border-radius: 10px;
+}
+
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.75rem;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+.summary-row strong {
+  color: #fff;
+  font-variant-numeric: tabular-nums;
+}
+
+.chart-card {
+  margin-bottom: 1.25rem;
+  padding: 0.85rem 0.75rem 1rem;
+  background: #141414;
+  border: 1px solid #2a2a2a;
+  border-radius: 12px;
+}
+
+.chart-card h2 {
+  margin: 0 0 0.75rem;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #f0f0f0;
+}
+
+.chart-wrap {
+  position: relative;
+  height: 220px;
+  width: 100%;
+}
+
+.chart-wrap-donut {
+  height: 260px;
+}
