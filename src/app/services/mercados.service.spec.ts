@@ -1,88 +1,66 @@
 import { TestBed } from '@angular/core/testing';
-import { SUPABASE_CLIENT } from '../core/supabase.client';
 import { Mercado } from '../models/models';
-import { createQueryChain, createSupabaseMock } from '../testing/supabase.mock';
+import {
+  createIsolatedOfflineDb,
+  offlineProviders,
+} from '../testing/offline-test.helpers';
+import { OfflineDbService } from '../offline/offline-db.service';
 import { MercadosService } from './mercados.service';
 
 describe('MercadosService', () => {
   let service: MercadosService;
-  let fromSpy: jasmine.Spy;
+  let offline: OfflineDbService;
 
   const sample: Mercado[] = [
     {
       id: 'm1',
       nombre: 'Éxito',
       created_at: '2026-01-01T00:00:00Z',
+     updated_at: '2026-01-01T00:00:00Z',
     },
     {
       id: 'm2',
       nombre: 'D1',
       created_at: '2026-01-01T00:00:00Z',
+     updated_at: '2026-01-01T00:00:00Z',
     },
   ];
 
-  beforeEach(() => {
-    const supabase = createSupabaseMock(() =>
-      createQueryChain({ data: sample, error: null })
-    );
-    fromSpy = supabase.from;
+  beforeEach(async () => {
+    offline = createIsolatedOfflineDb();
+    await offline.db.mercado.bulkPut(sample);
 
     TestBed.configureTestingModule({
-      providers: [MercadosService, { provide: SUPABASE_CLIENT, useValue: supabase }],
+      providers: [MercadosService, ...offlineProviders(offline)],
     });
     service = TestBed.inject(MercadosService);
   });
 
+  afterEach(async () => {
+    await offline.db.delete();
+  });
+
   it('list() consulta mercado ordenado por nombre', async () => {
-    const chain = createQueryChain({ data: sample, error: null });
-    fromSpy.and.returnValue(chain);
     const result = await service.list();
-    expect(fromSpy).toHaveBeenCalledWith('mercado');
-    expect(chain.order).toHaveBeenCalledWith('nombre', { ascending: true });
-    expect(result.length).toBe(2);
+    expect(result.map((m) => m.nombre)).toEqual(['D1', 'Éxito']);
   });
 
   it('create() inserta con trim', async () => {
-    let insertPayload: unknown;
-    const created = {
-      id: 'm3',
-      nombre: 'Jumbo',
-      created_at: '2026-01-02T00:00:00Z',
-    };
-    fromSpy.and.callFake(() => {
-      const chain = createQueryChain({ data: created, error: null });
-      chain.insert.and.callFake((payload: unknown) => {
-        insertPayload = payload;
-        return chain;
-      });
-      return chain;
-    });
-
     const mercado = await service.create('  Jumbo  ');
-    expect(insertPayload).toEqual({ nombre: 'Jumbo' });
     expect(mercado.nombre).toBe('Jumbo');
+    const list = await service.list();
+    expect(list.some((m) => m.nombre === 'Jumbo')).toBeTrue();
   });
 
   it('rename() actualiza nombre', async () => {
-    const chain = createQueryChain({ data: null, error: null });
-    fromSpy.and.returnValue(chain);
     await service.rename('m1', '  Éxito Express  ');
-    expect(chain.update).toHaveBeenCalledWith({ nombre: 'Éxito Express' });
-    expect(chain.eq).toHaveBeenCalledWith('id', 'm1');
+    const list = await service.list();
+    expect(list.find((m) => m.id === 'm1')?.nombre).toBe('Éxito Express');
   });
 
   it('remove() elimina por id', async () => {
-    const chain = createQueryChain({ data: null, error: null });
-    fromSpy.and.returnValue(chain);
     await service.remove('m2');
-    expect(chain.delete).toHaveBeenCalled();
-    expect(chain.eq).toHaveBeenCalledWith('id', 'm2');
-  });
-
-  it('list() lanza si hay error', async () => {
-    fromSpy.and.returnValue(
-      createQueryChain({ data: null, error: { message: 'db' } })
-    );
-    await expectAsync(service.list()).toBeRejected();
+    const list = await service.list();
+    expect(list.some((m) => m.id === 'm2')).toBeFalse();
   });
 });

@@ -17,11 +17,13 @@ describe('MercadosComponent', () => {
       id: 'm1',
       nombre: 'Éxito',
       created_at: '2026-01-01T00:00:00Z',
+    updated_at: '2026-01-01T00:00:00Z',
     },
     {
       id: 'm2',
       nombre: 'D1',
       created_at: '2026-01-01T00:00:00Z',
+    updated_at: '2026-01-01T00:00:00Z',
     },
   ];
 
@@ -82,6 +84,7 @@ describe('MercadosComponent', () => {
       id: 'm3',
       nombre: 'Jumbo',
       created_at: '2026-01-02T00:00:00Z',
+    updated_at: '2026-01-02T00:00:00Z',
     };
     mercadosService.create.and.resolveTo(created);
     component.openAdd();

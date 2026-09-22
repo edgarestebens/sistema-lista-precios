@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { Parametro } from '../../models/models';
+import { ConnectivityService } from '../../offline/connectivity.service';
 import { AlertService } from '../../services/alert.service';
 import { ParametrosService } from '../../services/parametros.service';
 import { ParametrosComponent } from './parametros.component';
@@ -40,6 +41,10 @@ describe('ParametrosComponent', () => {
         provideRouter([]),
         { provide: ParametrosService, useValue: parametrosService },
         { provide: AlertService, useValue: alertService },
+        {
+          provide: ConnectivityService,
+          useValue: { isOnline: () => true, online: () => true },
+        },
       ],
     }).compileComponents();
 

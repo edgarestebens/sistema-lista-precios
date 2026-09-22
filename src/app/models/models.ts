@@ -3,6 +3,7 @@ export interface Market {
   name: string;
   position: number;
   created_at: string;
+  updated_at: string;
   user_id?: string;
 }
 
@@ -13,6 +14,7 @@ export interface Producto {
   lista_nombre?: string;
   user_id?: string;
   created_at: string;
+  updated_at: string;
 }
 
 export interface Mercado {
@@ -20,6 +22,7 @@ export interface Mercado {
   nombre: string;
   user_id?: string;
   created_at: string;
+  updated_at: string;
 }
 
 export interface Gasto {
@@ -45,6 +48,7 @@ export interface ComparativoPrecio {
   precio: number;
   user_id?: string;
   created_at: string;
+  updated_at: string;
   producto?: { nombre: string } | null;
   mercado?: { nombre: string } | null;
 }
@@ -71,5 +75,6 @@ export interface Item {
   is_checked: boolean;
   position: number;
   created_at: string;
+  updated_at: string;
   user_id?: string;
 }

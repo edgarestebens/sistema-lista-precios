@@ -1,12 +1,45 @@
 import { TestBed } from '@angular/core/testing';
-import { SUPABASE_CLIENT } from '../core/supabase.client';
-import { ComparativoPrecio } from '../models/models';
-import { createQueryChain, createSupabaseMock } from '../testing/supabase.mock';
+import { ComparativoPrecio, Mercado, Producto } from '../models/models';
+import {
+  createIsolatedOfflineDb,
+  offlineProviders,
+} from '../testing/offline-test.helpers';
+import { OfflineDbService } from '../offline/offline-db.service';
 import { ComparativoPrecioService } from './comparativo-precio.service';
 
 describe('ComparativoPrecioService', () => {
   let service: ComparativoPrecioService;
-  let fromSpy: jasmine.Spy;
+  let offline: OfflineDbService;
+
+  const productos: Producto[] = [
+    {
+      id: 'p1',
+      nombre: 'Leche',
+      created_at: '2026-01-01T00:00:00Z',
+     updated_at: '2026-01-01T00:00:00Z',
+    },
+    {
+      id: 'p2',
+      nombre: 'Arroz',
+      created_at: '2026-01-01T00:00:00Z',
+     updated_at: '2026-01-01T00:00:00Z',
+    },
+  ];
+
+  const mercados: Mercado[] = [
+    {
+      id: 'me1',
+      nombre: 'Éxito',
+      created_at: '2026-01-01T00:00:00Z',
+     updated_at: '2026-01-01T00:00:00Z',
+    },
+    {
+      id: 'me2',
+      nombre: 'D1',
+      created_at: '2026-01-01T00:00:00Z',
+     updated_at: '2026-01-01T00:00:00Z',
+    },
+  ];
 
   const sampleRows: ComparativoPrecio[] = [
     {
@@ -15,6 +48,7 @@ describe('ComparativoPrecioService', () => {
       mercado_id: 'me1',
       precio: 3000,
       created_at: '2026-01-01T00:00:00Z',
+     updated_at: '2026-01-01T00:00:00Z',
       producto: { nombre: 'Leche' },
       mercado: { nombre: 'Éxito' },
     },
@@ -24,6 +58,7 @@ describe('ComparativoPrecioService', () => {
       mercado_id: 'me2',
       precio: 2800,
       created_at: '2026-01-01T00:00:00Z',
+     updated_at: '2026-01-01T00:00:00Z',
       producto: { nombre: 'Leche' },
       mercado: { nombre: 'D1' },
     },
@@ -33,41 +68,34 @@ describe('ComparativoPrecioService', () => {
       mercado_id: 'me1',
       precio: 0,
       created_at: '2026-01-01T00:00:00Z',
+     updated_at: '2026-01-01T00:00:00Z',
       producto: { nombre: 'Arroz' },
       mercado: { nombre: 'Éxito' },
     },
   ];
 
-  beforeEach(() => {
-    const supabase = createSupabaseMock(() =>
-      createQueryChain({ data: sampleRows, error: null })
-    );
-    fromSpy = supabase.from;
+  beforeEach(async () => {
+    offline = createIsolatedOfflineDb();
+    await offline.db.producto.bulkPut(productos);
+    await offline.db.mercado.bulkPut(mercados);
+    await offline.db.comparativo_precio.bulkPut(sampleRows);
 
     TestBed.configureTestingModule({
-      providers: [
-        ComparativoPrecioService,
-        { provide: SUPABASE_CLIENT, useValue: supabase },
-      ],
+      providers: [ComparativoPrecioService, ...offlineProviders(offline)],
     });
     service = TestBed.inject(ComparativoPrecioService);
   });
 
-  it('list() consulta comparativo_precio con joins', async () => {
-    const chain = createQueryChain({ data: sampleRows, error: null });
-    fromSpy.and.returnValue(chain);
+  afterEach(async () => {
+    await offline.db.delete();
+  });
+
+  it('list() retorna filas locales', async () => {
     const result = await service.list();
-    expect(fromSpy).toHaveBeenCalledWith('comparativo_precio');
-    expect(chain.select).toHaveBeenCalledWith(
-      '*, producto:producto_id(nombre), mercado:mercado_id(nombre)'
-    );
     expect(result.length).toBe(3);
   });
 
   it('listGrouped() agrupa por producto', async () => {
-    fromSpy.and.returnValue(
-      createQueryChain({ data: sampleRows, error: null })
-    );
     const groups = await service.listGrouped();
     expect(groups.length).toBe(2);
     const leche = groups.find((g) => g.producto_id === 'p1');
@@ -77,9 +105,6 @@ describe('ComparativoPrecioService', () => {
   });
 
   it('mapPrecioMasBarato() toma el menor > 0', async () => {
-    fromSpy.and.returnValue(
-      createQueryChain({ data: sampleRows, error: null })
-    );
     const map = await service.mapPrecioMasBarato();
     expect(map['p1']).toEqual({
       producto_id: 'p1',
@@ -89,43 +114,20 @@ describe('ComparativoPrecioService', () => {
     expect(map['p2']).toBeUndefined();
   });
 
-  it('saveForProducto() hace upsert por mercado', async () => {
-    let upsertPayload: unknown;
-    let upsertOpts: unknown;
-    fromSpy.and.callFake(() => {
-      const chain = createQueryChain({ data: null, error: null });
-      chain.upsert.and.callFake((payload: unknown, opts?: unknown) => {
-        upsertPayload = payload;
-        upsertOpts = opts;
-        return chain;
-      });
-      return chain;
-    });
-
+  it('saveForProducto() guarda precios por mercado', async () => {
     await service.saveForProducto('p1', [
       { mercado_id: 'me1', precio: 3100 },
       { mercado_id: 'me2', precio: 0 },
     ]);
-
-    expect(upsertPayload).toEqual([
-      { producto_id: 'p1', mercado_id: 'me1', precio: 3100 },
-      { producto_id: 'p1', mercado_id: 'me2', precio: 0 },
-    ]);
-    expect(upsertOpts).toEqual({ onConflict: 'producto_id,mercado_id' });
+    const rows = await service.list();
+    const p1 = rows.filter((r) => r.producto_id === 'p1');
+    expect(p1.find((r) => r.mercado_id === 'me1')?.precio).toBe(3100);
+    expect(p1.find((r) => r.mercado_id === 'me2')?.precio).toBe(0);
   });
 
   it('removeByProducto() elimina por producto_id', async () => {
-    const chain = createQueryChain({ data: null, error: null });
-    fromSpy.and.returnValue(chain);
     await service.removeByProducto('p1');
-    expect(chain.delete).toHaveBeenCalled();
-    expect(chain.eq).toHaveBeenCalledWith('producto_id', 'p1');
-  });
-
-  it('list() lanza si hay error', async () => {
-    fromSpy.and.returnValue(
-      createQueryChain({ data: null, error: { message: 'db' } })
-    );
-    await expectAsync(service.list()).toBeRejected();
+    const rows = await service.list();
+    expect(rows.some((r) => r.producto_id === 'p1')).toBeFalse();
   });
 });

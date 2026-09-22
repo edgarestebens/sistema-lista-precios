@@ -20,12 +20,14 @@ describe('ProductosComponent', () => {
       name: 'Carnes',
       position: 0,
       created_at: '2026-01-01T00:00:00Z',
+    updated_at: '2026-01-01T00:00:00Z',
     },
     {
       id: 'm2',
       name: 'Verduras',
       position: 1,
       created_at: '2026-01-01T00:00:00Z',
+    updated_at: '2026-01-01T00:00:00Z',
     },
   ];
 
@@ -36,6 +38,7 @@ describe('ProductosComponent', () => {
       market_id: 'm1',
       lista_nombre: 'Carnes',
       created_at: '2026-01-01T00:00:00Z',
+    updated_at: '2026-01-01T00:00:00Z',
     },
     {
       id: 'p2',
@@ -43,6 +46,7 @@ describe('ProductosComponent', () => {
       market_id: 'm1',
       lista_nombre: 'Carnes',
       created_at: '2026-01-01T00:00:00Z',
+    updated_at: '2026-01-01T00:00:00Z',
     },
   ];
 
@@ -53,6 +57,7 @@ describe('ProductosComponent', () => {
       market_id: 'm1',
       lista_nombre: 'Carnes',
       created_at: '2026-01-01T00:00:00Z',
+    updated_at: '2026-01-01T00:00:00Z',
     }));
   }
 
@@ -147,6 +152,7 @@ describe('ProductosComponent', () => {
         market_id: 'm2',
         lista_nombre: 'Verduras',
         created_at: '2026-01-01T00:00:00Z',
+      updated_at: '2026-01-01T00:00:00Z',
       },
     ]);
     fixture.detectChanges();
@@ -165,6 +171,7 @@ describe('ProductosComponent', () => {
         market_id: 'm2',
         lista_nombre: 'Verduras',
         created_at: '2026-01-01T00:00:00Z',
+      updated_at: '2026-01-01T00:00:00Z',
       },
       {
         id: 'p4',
@@ -172,6 +179,7 @@ describe('ProductosComponent', () => {
         market_id: null,
         lista_nombre: '',
         created_at: '2026-01-01T00:00:00Z',
+      updated_at: '2026-01-01T00:00:00Z',
       },
     ]);
     fixture.detectChanges();
@@ -202,6 +210,7 @@ describe('ProductosComponent', () => {
       market_id: 'm1',
       lista_nombre: 'Carnes',
       created_at: '2026-01-02T00:00:00Z',
+    updated_at: '2026-01-02T00:00:00Z',
     };
     productosService.create.and.resolveTo(created);
     component.openAdd();

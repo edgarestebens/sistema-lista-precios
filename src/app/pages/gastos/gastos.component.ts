@@ -3,6 +3,7 @@ import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { Gasto } from '../../models/models';
 import { toSpanishError } from '../../core/es-error';
+import { ConnectivityService } from '../../offline/connectivity.service';
 import { AlertService } from '../../services/alert.service';
 import { GastosService } from '../../services/gastos.service';
 import { ParametrosService } from '../../services/parametros.service';
@@ -97,12 +98,21 @@ export class GastosComponent implements OnInit {
   constructor(
     private gastosService: GastosService,
     private parametrosService: ParametrosService,
-    private alert: AlertService
+    private alert: AlertService,
+    private connectivity: ConnectivityService
   ) {}
 
   async ngOnInit(): Promise<void> {
     this.aplicarRangoPorDefecto();
     await this.load();
+  }
+
+  private requireOnline(): boolean {
+    if (this.connectivity.isOnline()) return true;
+    void this.alert.error(
+      'Gastos requiere internet. Conectate para cargar o guardar.'
+    );
+    return false;
   }
 
   /** Del 15 del mes actual al 15 del mes siguiente. */
@@ -119,6 +129,10 @@ export class GastosComponent implements OnInit {
   }
 
   async load(): Promise<void> {
+    if (!this.requireOnline()) {
+      this.loading.set(false);
+      return;
+    }
     this.loading.set(true);
     try {
       const [gastos, parametro] = await Promise.all([
@@ -249,6 +263,7 @@ export class GastosComponent implements OnInit {
 
   async saveGasto(): Promise<void> {
     if (!this.formValid || this.saving()) return;
+    if (!this.requireOnline()) return;
     const input = {
       fecha: this.formFecha,
       valor: Number(this.formValor),
@@ -284,6 +299,7 @@ export class GastosComponent implements OnInit {
       `¿Eliminar el gasto "${gasto.concepto}"?`
     );
     if (!ok) return;
+    if (!this.requireOnline()) return;
     this.deletingId.set(gasto.id);
     try {
       await this.gastosService.remove(gasto.id);

@@ -1,6 +1,7 @@
-import { Inject, Injectable, signal } from '@angular/core';
+import { Inject, Injectable, Injector, signal } from '@angular/core';
 import { Session, SupabaseClient, User } from '@supabase/supabase-js';
 import { SUPABASE_CLIENT } from '../core/supabase.client';
+import { SyncService } from '../offline/sync.service';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
@@ -8,7 +9,10 @@ export class AuthService {
   readonly user = signal<User | null>(null);
   readonly ready = signal(false);
 
-  constructor(@Inject(SUPABASE_CLIENT) private readonly supabase: SupabaseClient) {
+  constructor(
+    @Inject(SUPABASE_CLIENT) private readonly supabase: SupabaseClient,
+    private readonly injector: Injector
+  ) {
     void this.init();
   }
 
@@ -50,6 +54,11 @@ export class AuthService {
   }
 
   async signOut(): Promise<void> {
+    try {
+      await this.injector.get(SyncService).clearLocalOnLogout();
+    } catch {
+      // Si falla limpiar caché local, igual se cierra sesión
+    }
     const { error } = await this.supabase.auth.signOut();
     if (error) throw error;
   }

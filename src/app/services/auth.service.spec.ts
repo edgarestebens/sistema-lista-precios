@@ -1,6 +1,8 @@
 import { TestBed } from '@angular/core/testing';
 import { AuthService } from './auth.service';
 import { SUPABASE_CLIENT } from '../core/supabase.client';
+import { SyncService } from '../offline/sync.service';
+import { mockSyncService } from '../testing/offline-test.helpers';
 
 describe('AuthService', () => {
   let service: AuthService;
@@ -11,8 +13,10 @@ describe('AuthService', () => {
     signUp: jasmine.Spy;
     signOut: jasmine.Spy;
   };
+  let sync: jasmine.SpyObj<SyncService>;
 
   beforeEach(() => {
+    sync = mockSyncService();
     authApi = {
       getSession: jasmine
         .createSpy('getSession')
@@ -31,6 +35,7 @@ describe('AuthService', () => {
       providers: [
         AuthService,
         { provide: SUPABASE_CLIENT, useValue: { auth: authApi } },
+        { provide: SyncService, useValue: sync },
       ],
     });
     service = TestBed.inject(AuthService);
@@ -52,8 +57,9 @@ describe('AuthService', () => {
     expect(arg.options.data.full_name).toBe('Ana');
   });
 
-  it('signOut() cierra sesión', async () => {
+  it('signOut() limpia caché local y cierra sesión', async () => {
     await service.signOut();
+    expect(sync.clearLocalOnLogout).toHaveBeenCalled();
     expect(authApi.signOut).toHaveBeenCalled();
   });
 });

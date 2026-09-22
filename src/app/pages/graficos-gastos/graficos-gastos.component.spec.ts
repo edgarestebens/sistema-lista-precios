@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { Gasto, Parametro } from '../../models/models';
+import { ConnectivityService } from '../../offline/connectivity.service';
 import { AlertService } from '../../services/alert.service';
 import { GastosService } from '../../services/gastos.service';
 import { ParametrosService } from '../../services/parametros.service';
@@ -48,7 +49,7 @@ describe('GraficosGastosComponent', () => {
     id: 'par1',
     saldo_gasto: 600000,
     created_at: '2026-09-01T00:00:00Z',
-    updated_at: '2026-09-01T00:00:00Z',
+   updated_at: '2026-09-01T00:00:00Z',
   };
 
   beforeEach(async () => {
@@ -75,6 +76,10 @@ describe('GraficosGastosComponent', () => {
         { provide: GastosService, useValue: gastosService },
         { provide: ParametrosService, useValue: parametrosService },
         { provide: AlertService, useValue: alertService },
+        {
+          provide: ConnectivityService,
+          useValue: { isOnline: () => true, online: () => true },
+        },
       ],
     }).compileComponents();
 

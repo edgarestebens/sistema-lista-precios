@@ -1,12 +1,15 @@
 import { TestBed } from '@angular/core/testing';
-import { SUPABASE_CLIENT } from '../core/supabase.client';
 import { Market } from '../models/models';
-import { createQueryChain, createSupabaseMock } from '../testing/supabase.mock';
+import {
+  createIsolatedOfflineDb,
+  offlineProviders,
+} from '../testing/offline-test.helpers';
+import { OfflineDbService } from '../offline/offline-db.service';
 import { MarketsService } from './markets.service';
 
 describe('MarketsService', () => {
   let service: MarketsService;
-  let fromSpy: jasmine.Spy;
+  let offline: OfflineDbService;
 
   const sampleMarkets: Market[] = [
     {
@@ -14,98 +17,65 @@ describe('MarketsService', () => {
       name: 'Carnes',
       position: 0,
       created_at: '2026-01-01T00:00:00Z',
+     updated_at: '2026-01-01T00:00:00Z',
     },
     {
       id: 'm2',
       name: 'Mercado',
       position: 1,
       created_at: '2026-01-01T00:00:00Z',
+     updated_at: '2026-01-01T00:00:00Z',
     },
   ];
 
-  beforeEach(() => {
-    const supabase = createSupabaseMock(() =>
-      createQueryChain({ data: sampleMarkets, error: null })
-    );
-    fromSpy = supabase.from;
+  beforeEach(async () => {
+    offline = createIsolatedOfflineDb();
+    await offline.db.markets.bulkPut(sampleMarkets);
 
     TestBed.configureTestingModule({
-      providers: [
-        MarketsService,
-        { provide: SUPABASE_CLIENT, useValue: supabase },
-      ],
+      providers: [MarketsService, ...offlineProviders(offline)],
     });
     service = TestBed.inject(MarketsService);
   });
 
-  it('list() retorna mercados ordenados', async () => {
-    const result = await service.list();
-    expect(fromSpy).toHaveBeenCalledWith('markets');
-    expect(result).toEqual(sampleMarkets);
+  afterEach(async () => {
+    await offline.db.delete();
   });
 
-  it('list() retorna [] si data es null', async () => {
-    fromSpy.and.returnValue(createQueryChain({ data: null, error: null }));
+  it('list() retorna mercados ordenados', async () => {
+    const result = await service.list();
+    expect(result.map((m) => m.id)).toEqual(['m1', 'm2']);
+  });
+
+  it('list() retorna [] si no hay datos', async () => {
+    await offline.db.markets.clear();
     expect(await service.list()).toEqual([]);
   });
 
-  it('list() lanza si hay error', async () => {
-    fromSpy.and.returnValue(
-      createQueryChain({ data: null, error: { message: 'fail' } })
-    );
-    await expectAsync(service.list()).toBeRejected();
-  });
-
   it('getById() retorna un mercado', async () => {
-    fromSpy.and.returnValue(
-      createQueryChain({ data: sampleMarkets[0], error: null })
-    );
     const market = await service.getById('m1');
     expect(market?.name).toBe('Carnes');
   });
 
   it('create() hace trim del nombre y usa position = length', async () => {
-    let insertPayload: unknown;
-    fromSpy.and.callFake(() => {
-      const chain = createQueryChain({
-        data: {
-          id: 'm3',
-          name: 'Frutas',
-          position: 2,
-          created_at: '2026-01-02T00:00:00Z',
-        },
-        error: null,
-      });
-      chain.insert.and.callFake((payload: unknown) => {
-        insertPayload = payload;
-        return chain;
-      });
-      // First call is list() → order resolves to sampleMarkets
-      chain.order.and.returnValue(
-        Promise.resolve({ data: sampleMarkets, error: null })
-      );
-      return chain;
-    });
-
     const created = await service.create('  Frutas  ');
-    expect(insertPayload).toEqual({ name: 'Frutas', position: 2 });
     expect(created.name).toBe('Frutas');
+    expect(created.position).toBe(2);
+    const all = await service.list();
+    expect(all.some((m) => m.name === 'Frutas')).toBeTrue();
   });
 
   it('remove() elimina por id', async () => {
-    const chain = createQueryChain({ data: null, error: null });
-    fromSpy.and.returnValue(chain);
     await service.remove('m1');
-    expect(chain.delete).toHaveBeenCalled();
-    expect(chain.eq).toHaveBeenCalledWith('id', 'm1');
+    expect(await service.getById('m1')).toBeNull();
   });
 
   it('reorder() actualiza position de cada mercado', async () => {
-    const chain = createQueryChain({ data: null, error: null });
-    fromSpy.and.returnValue(chain);
-    await service.reorder(sampleMarkets);
-    expect(fromSpy).toHaveBeenCalledTimes(2);
-    expect(chain.update).toHaveBeenCalledWith({ position: 0 });
-    expect(chain.update).toHaveBeenCalledWith({ position: 1 });
+    await service.reorder([sampleMarkets[1], sampleMarkets[0]]);
+    const list = await service.list();
+    expect(list[0].id).toBe('m2');
+    expect(list[0].position).toBe(0);
+    expect(list[1].id).toBe('m1');
+    expect(list[1].position).toBe(1);
   });
 });

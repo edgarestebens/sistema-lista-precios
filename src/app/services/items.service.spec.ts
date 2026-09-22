@@ -1,31 +1,37 @@
 import { TestBed } from '@angular/core/testing';
-import { SUPABASE_CLIENT } from '../core/supabase.client';
-import { Item } from '../models/models';
-import { createQueryChain, createSupabaseMock } from '../testing/supabase.mock';
+import { Item, Producto } from '../models/models';
+import {
+  createIsolatedOfflineDb,
+  offlineProviders,
+} from '../testing/offline-test.helpers';
+import { OfflineDbService } from '../offline/offline-db.service';
 import { ItemsService } from './items.service';
 
 describe('ItemsService', () => {
   let service: ItemsService;
-  let fromSpy: jasmine.Spy;
+  let offline: OfflineDbService;
 
-  const sampleRows = [
+  const productos: Producto[] = [
     {
-      id: 'i1',
+      id: 'p1',
+      nombre: 'Leche',
       market_id: 'm1',
-      producto_id: 'p1',
-      is_checked: false,
-      position: 0,
       created_at: '2026-01-01T00:00:00Z',
-      producto: { nombre: 'Leche' },
+     updated_at: '2026-01-01T00:00:00Z',
     },
     {
-      id: 'i2',
+      id: 'p2',
+      nombre: 'Arroz',
       market_id: 'm1',
-      producto_id: 'p2',
-      is_checked: true,
-      position: 1,
       created_at: '2026-01-01T00:00:00Z',
-      producto: { nombre: 'Arroz' },
+     updated_at: '2026-01-01T00:00:00Z',
+    },
+    {
+      id: 'p3',
+      nombre: 'Pan',
+      market_id: 'm1',
+      created_at: '2026-01-01T00:00:00Z',
+     updated_at: '2026-01-01T00:00:00Z',
     },
   ];
 
@@ -38,6 +44,7 @@ describe('ItemsService', () => {
       is_checked: false,
       position: 0,
       created_at: '2026-01-01T00:00:00Z',
+     updated_at: '2026-01-01T00:00:00Z',
     },
     {
       id: 'i2',
@@ -47,102 +54,58 @@ describe('ItemsService', () => {
       is_checked: true,
       position: 1,
       created_at: '2026-01-01T00:00:00Z',
+     updated_at: '2026-01-01T00:00:00Z',
     },
   ];
 
-  beforeEach(() => {
-    const supabase = createSupabaseMock(() =>
-      createQueryChain({ data: sampleRows, error: null })
-    );
-    fromSpy = supabase.from;
+  beforeEach(async () => {
+    offline = createIsolatedOfflineDb();
+    await offline.db.producto.bulkPut(productos);
+    await offline.db.items.bulkPut(sampleItems);
 
     TestBed.configureTestingModule({
-      providers: [ItemsService, { provide: SUPABASE_CLIENT, useValue: supabase }],
+      providers: [ItemsService, ...offlineProviders(offline)],
     });
     service = TestBed.inject(ItemsService);
   });
 
-  it('listByMarket() filtra por market_id y mapea nombre', async () => {
-    const chain = createQueryChain({ data: sampleRows, error: null });
-    fromSpy.and.returnValue(chain);
+  afterEach(async () => {
+    await offline.db.delete();
+  });
 
+  it('listByMarket() filtra por market_id y mapea nombre', async () => {
     const result = await service.listByMarket('m1');
-    expect(fromSpy).toHaveBeenCalledWith('items');
-    expect(chain.select).toHaveBeenCalledWith('*, producto:producto_id(nombre)');
-    expect(chain.eq).toHaveBeenCalledWith('market_id', 'm1');
-    expect(chain.order).toHaveBeenCalledWith('is_checked', { ascending: true });
-    expect(chain.order).toHaveBeenCalledWith('position', { ascending: true });
-    expect(result).toEqual(sampleItems);
+    expect(result.map((i) => i.id)).toEqual(['i1', 'i2']);
+    expect(result[0].nombre).toBe('Leche');
   });
 
   it('create() inserta al inicio de los no chuleados', async () => {
-    let insertPayload: unknown;
-    let call = 0;
-    fromSpy.and.callFake(() => {
-      call += 1;
-      if (call === 1) {
-        return createQueryChain({ data: sampleRows, error: null });
-      }
-      const chain = createQueryChain({
-        data: {
-          id: 'i3',
-          market_id: 'm1',
-          producto_id: 'p3',
-          is_checked: false,
-          position: 0,
-          created_at: '2026-01-02T00:00:00Z',
-          producto: { nombre: 'Pan' },
-        },
-        error: null,
-      });
-      chain.insert.and.callFake((payload: unknown) => {
-        insertPayload = payload;
-        return chain;
-      });
-      return chain;
-    });
-
     const item = await service.create('m1', 'p3');
-    expect(insertPayload).toEqual({
-      market_id: 'm1',
-      producto_id: 'p3',
-      position: 0,
-      is_checked: false,
-    });
     expect(item.nombre).toBe('Pan');
     expect(item.producto_id).toBe('p3');
     expect(item.position).toBe(0);
+    const list = await service.listByMarket('m1');
+    expect(list[0].producto_id).toBe('p3');
   });
 
   it('toggleChecked() actualiza is_checked', async () => {
-    const chain = createQueryChain({ data: null, error: null });
-    fromSpy.and.returnValue(chain);
     await service.toggleChecked('i1', true);
-    expect(chain.update).toHaveBeenCalledWith({ is_checked: true });
-    expect(chain.eq).toHaveBeenCalledWith('id', 'i1');
+    const list = await service.listByMarket('m1');
+    expect(list.find((i) => i.id === 'i1')?.is_checked).toBeTrue();
   });
 
   it('remove() elimina por id', async () => {
-    const chain = createQueryChain({ data: null, error: null });
-    fromSpy.and.returnValue(chain);
     await service.remove('i2');
-    expect(chain.delete).toHaveBeenCalled();
-    expect(chain.eq).toHaveBeenCalledWith('id', 'i2');
+    const list = await service.listByMarket('m1');
+    expect(list.some((i) => i.id === 'i2')).toBeFalse();
   });
 
   it('reorder() actualiza positions', async () => {
-    const chain = createQueryChain({ data: null, error: null });
-    fromSpy.and.returnValue(chain);
-    await service.reorder(sampleItems);
-    expect(fromSpy).toHaveBeenCalledTimes(2);
-    expect(chain.update).toHaveBeenCalledWith({ position: 0 });
-    expect(chain.update).toHaveBeenCalledWith({ position: 1 });
-  });
-
-  it('listByMarket() lanza si hay error', async () => {
-    fromSpy.and.returnValue(
-      createQueryChain({ data: null, error: { message: 'db' } })
-    );
-    await expectAsync(service.listByMarket('m1')).toBeRejected();
+    await service.reorder([sampleItems[1], sampleItems[0]]);
+    const list = await service.listByMarket('m1');
+    // checked items go after unchecked in listByMarket sort
+    const byId = new Map(list.map((i) => [i.id, i]));
+    expect(byId.get('i2')?.position).toBe(0);
+    expect(byId.get('i1')?.position).toBe(1);
   });
 });

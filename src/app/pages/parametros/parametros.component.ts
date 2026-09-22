@@ -2,6 +2,7 @@ import { Component, OnInit, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { toSpanishError } from '../../core/es-error';
+import { ConnectivityService } from '../../offline/connectivity.service';
 import { AlertService } from '../../services/alert.service';
 import { ParametrosService } from '../../services/parametros.service';
 
@@ -19,14 +20,27 @@ export class ParametrosComponent implements OnInit {
 
   constructor(
     private parametrosService: ParametrosService,
-    private alert: AlertService
+    private alert: AlertService,
+    private connectivity: ConnectivityService
   ) {}
 
   async ngOnInit(): Promise<void> {
     await this.load();
   }
 
+  private requireOnline(): boolean {
+    if (this.connectivity.isOnline()) return true;
+    void this.alert.error(
+      'Parámetros requiere internet. Conectate para cargar o guardar.'
+    );
+    return false;
+  }
+
   async load(): Promise<void> {
+    if (!this.requireOnline()) {
+      this.loading.set(false);
+      return;
+    }
     this.loading.set(true);
     try {
       const parametro = await this.parametrosService.get();
@@ -50,6 +64,7 @@ export class ParametrosComponent implements OnInit {
 
   async save(): Promise<void> {
     if (!this.formValid || this.saving()) return;
+    if (!this.requireOnline()) return;
     this.saving.set(true);
     try {
       await this.parametrosService.updateSaldoGasto(Number(this.formSaldoGasto));

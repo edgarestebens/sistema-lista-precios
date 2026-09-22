@@ -23,6 +23,7 @@ describe('ItemsComponent', () => {
     name: 'Mercado',
     position: 0,
     created_at: '2026-01-01T00:00:00Z',
+  updated_at: '2026-01-01T00:00:00Z',
   };
 
   const productos: Producto[] = [
@@ -31,30 +32,35 @@ describe('ItemsComponent', () => {
       nombre: 'Leche',
       market_id: 'm1',
       created_at: '2026-01-01T00:00:00Z',
+    updated_at: '2026-01-01T00:00:00Z',
     },
     {
       id: 'p2',
       nombre: 'Arroz',
       market_id: 'm1',
       created_at: '2026-01-01T00:00:00Z',
+    updated_at: '2026-01-01T00:00:00Z',
     },
     {
       id: 'p3',
       nombre: 'Pan',
       market_id: 'm1',
       created_at: '2026-01-01T00:00:00Z',
+    updated_at: '2026-01-01T00:00:00Z',
     },
     {
       id: 'p4',
       nombre: 'Tomate',
       market_id: 'm2',
       created_at: '2026-01-01T00:00:00Z',
+    updated_at: '2026-01-01T00:00:00Z',
     },
     {
       id: 'p5',
       nombre: 'Sin lista',
       market_id: null,
       created_at: '2026-01-01T00:00:00Z',
+    updated_at: '2026-01-01T00:00:00Z',
     },
   ];
 
@@ -71,6 +77,7 @@ describe('ItemsComponent', () => {
       is_checked: false,
       position: 0,
       created_at: '2026-01-01T00:00:00Z',
+    updated_at: '2026-01-01T00:00:00Z',
     },
     {
       id: 'i2',
@@ -80,6 +87,7 @@ describe('ItemsComponent', () => {
       is_checked: true,
       position: 1,
       created_at: '2026-01-01T00:00:00Z',
+    updated_at: '2026-01-01T00:00:00Z',
     },
   ];
 
@@ -182,6 +190,7 @@ describe('ItemsComponent', () => {
       is_checked: false,
       position: 2,
       created_at: '2026-01-02T00:00:00Z',
+    updated_at: '2026-01-02T00:00:00Z',
     };
     itemsService.create.and.resolveTo(created);
     itemsService.reorder.and.resolveTo();
@@ -343,6 +352,7 @@ describe('ItemsComponent', () => {
         is_checked: false,
         position: 0,
         created_at: '2026-01-01T00:00:00Z',
+      updated_at: '2026-01-01T00:00:00Z',
       },
       {
         id: 'i2',
@@ -352,6 +362,7 @@ describe('ItemsComponent', () => {
         is_checked: false,
         position: 1,
         created_at: '2026-01-01T00:00:00Z',
+      updated_at: '2026-01-01T00:00:00Z',
       },
       {
         id: 'i3',
@@ -361,6 +372,7 @@ describe('ItemsComponent', () => {
         is_checked: true,
         position: 2,
         created_at: '2026-01-01T00:00:00Z',
+      updated_at: '2026-01-01T00:00:00Z',
       },
     ]);
     fixture.detectChanges();
