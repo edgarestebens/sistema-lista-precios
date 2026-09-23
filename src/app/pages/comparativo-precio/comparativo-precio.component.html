@@ -133,26 +133,16 @@
       <table class="compare-table">
         <thead>
           <tr>
+            <th class="col-actions">Acciones</th>
             <th class="col-producto">Producto</th>
             @for (m of mercados(); track m.id) {
               <th>{{ m.nombre }}</th>
             }
-            <th class="col-actions">Acciones</th>
           </tr>
         </thead>
         <tbody>
           @for (fila of filasPagina(); track fila.producto_id) {
             <tr>
-              <td class="col-producto">{{ fila.producto_nombre }}</td>
-              @for (m of mercados(); track m.id) {
-                <td
-                  class="col-precio"
-                  [class.barato]="clasePrecio(fila, m.id) === 'barato'"
-                  [class.caro]="clasePrecio(fila, m.id) === 'caro'"
-                >
-                  {{ formatPrecio(precioDe(fila, m.id)) }}
-                </td>
-              }
               <td class="col-actions">
                 <button
                   type="button"
@@ -170,6 +160,16 @@
                   Eliminar
                 </button>
               </td>
+              <td class="col-producto">{{ fila.producto_nombre }}</td>
+              @for (m of mercados(); track m.id) {
+                <td
+                  class="col-precio"
+                  [class.barato]="clasePrecio(fila, m.id) === 'barato'"
+                  [class.caro]="clasePrecio(fila, m.id) === 'caro'"
+                >
+                  {{ formatPrecio(precioDe(fila, m.id)) }}
+                </td>
+              }
             </tr>
           }
         </tbody>

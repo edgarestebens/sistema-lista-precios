@@ -286,17 +286,39 @@
   font-size: 0.8rem;
 }
 
-.col-producto {
+.compare-table .col-actions {
   position: sticky;
   left: 0;
-  z-index: 1;
+  z-index: 2;
+  background: var(--row-bg);
+  text-align: left;
+  white-space: nowrap;
+  width: 7.25rem;
+  min-width: 7.25rem;
+}
+
+.compare-table thead .col-actions {
+  z-index: 3;
+}
+
+.compare-table .col-producto {
+  position: sticky;
+  left: 7.25rem;
+  z-index: 2;
   background: var(--row-bg);
   font-weight: 600;
-  min-width: 7.5rem;
-  max-width: 11rem;
+  width: 9.5rem;
+  min-width: 9.5rem;
+  max-width: 9.5rem;
   white-space: normal;
+  overflow-wrap: anywhere;
   word-break: break-word;
   line-height: 1.35;
+  overflow: hidden;
+}
+
+.compare-table thead .col-producto {
+  z-index: 3;
 }
 
 .col-precio {
@@ -311,10 +333,6 @@
 
 .col-precio.caro {
   color: #ef5350;
-}
-
-.col-actions {
-  text-align: right;
 }
 
 .action-btn {
