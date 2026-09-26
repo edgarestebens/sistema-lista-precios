@@ -1,4 +1,12 @@
-import { Component, OnInit, computed, signal } from '@angular/core';
+import {
+  Component,
+  DestroyRef,
+  OnInit,
+  computed,
+  effect,
+  inject,
+  signal,
+} from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import {
@@ -20,6 +28,8 @@ import { ProductosService } from '../../services/productos.service';
   styleUrl: './comparativo-precio.component.css',
 })
 export class ComparativoPrecioComponent implements OnInit {
+  private readonly destroyRef = inject(DestroyRef);
+
   filas = signal<ComparativoProducto[]>([]);
   productos = signal<Producto[]>([]);
   mercados = signal<Mercado[]>([]);
@@ -106,7 +116,28 @@ export class ComparativoPrecioComponent implements OnInit {
     private mercadosService: MercadosService,
     private alert: AlertService,
     private router: Router
-  ) {}
+  ) {
+    effect((onCleanup) => {
+      const open = this.showForm() || this.detalleFila() !== null;
+      if (!open) return;
+
+      const body = document.body;
+      const prevOverflow = body.style.overflow;
+      const prevTouchAction = body.style.touchAction;
+      body.style.overflow = 'hidden';
+      body.style.touchAction = 'none';
+
+      onCleanup(() => {
+        body.style.overflow = prevOverflow;
+        body.style.touchAction = prevTouchAction;
+      });
+    });
+
+    this.destroyRef.onDestroy(() => {
+      document.body.style.overflow = '';
+      document.body.style.touchAction = '';
+    });
+  }
 
   async ngOnInit(): Promise<void> {
     await this.load();

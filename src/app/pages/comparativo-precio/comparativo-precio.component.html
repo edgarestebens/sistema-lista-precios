@@ -234,7 +234,12 @@
 
   @if (detalleFila(); as detalle) {
     <div class="modal-backdrop" (click)="closeDetalle()">
-      <div class="modal" (click)="$event.stopPropagation()" role="dialog" aria-modal="true">
+      <div
+        class="modal modal-detalle"
+        (click)="$event.stopPropagation()"
+        role="dialog"
+        aria-modal="true"
+      >
         <h2>Precios</h2>
         <p class="form-label">
           Producto:
