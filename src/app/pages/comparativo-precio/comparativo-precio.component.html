@@ -51,7 +51,7 @@
           [ngModel]="filterMercadoId()"
           (ngModelChange)="onFilterMercadoChange($event)"
           name="filterMercado"
-          aria-label="Filtrar por mercado barato"
+          aria-label="Filtrar por mercado barato o igualado"
         >
           <option value="">Seleccione…</option>
           @for (m of mercados(); track m.id) {
@@ -86,7 +86,7 @@
   } @else if (filasFiltradas().length === 0) {
     <p class="muted empty">
       @if (filterMercadoId()) {
-        No hay productos baratos en ese mercado.
+        No hay productos baratos o igualados en ese mercado.
       } @else {
         No hay resultados para “{{ searchQuery() }}”.
       }
@@ -144,21 +144,30 @@
           @for (fila of filasPagina(); track fila.producto_id) {
             <tr>
               <td class="col-actions">
-                <button
-                  type="button"
-                  class="action-btn"
-                  (click)="openEdit($event, fila)"
-                >
-                  Editar
-                </button>
-                <button
-                  type="button"
-                  class="action-btn danger"
-                  (click)="deleteFila($event, fila)"
-                  [disabled]="deletingId() === fila.producto_id"
-                >
-                  Eliminar
-                </button>
+                <div class="actions-stack">
+                  <button
+                    type="button"
+                    class="action-btn"
+                    (click)="openDetalle($event, fila)"
+                  >
+                    Ver
+                  </button>
+                  <button
+                    type="button"
+                    class="action-btn"
+                    (click)="openEdit($event, fila)"
+                  >
+                    Editar
+                  </button>
+                  <button
+                    type="button"
+                    class="action-btn danger"
+                    (click)="deleteFila($event, fila)"
+                    [disabled]="deletingId() === fila.producto_id"
+                  >
+                    Eliminar
+                  </button>
+                </div>
               </td>
               <td class="col-producto">{{ fila.producto_nombre }}</td>
               @for (m of mercados(); track m.id) {
@@ -222,6 +231,37 @@
   >
     +
   </button>
+
+  @if (detalleFila(); as detalle) {
+    <div class="modal-backdrop" (click)="closeDetalle()">
+      <div class="modal" (click)="$event.stopPropagation()" role="dialog" aria-modal="true">
+        <h2>Precios</h2>
+        <p class="form-label">
+          Producto:
+          <strong>{{ detalle.producto_nombre }}</strong>
+        </p>
+        <ul class="detalle-precios">
+          @for (m of mercados(); track m.id) {
+            <li
+              class="detalle-precio-row"
+              [class.barato]="clasePrecio(detalle, m.id) === 'barato'"
+              [class.caro]="clasePrecio(detalle, m.id) === 'caro'"
+            >
+              <span class="detalle-mercado">{{ m.nombre }}</span>
+              <span class="detalle-valor">{{
+                formatPrecio(precioDe(detalle, m.id))
+              }}</span>
+            </li>
+          }
+        </ul>
+        <div class="modal-actions">
+          <button type="button" class="btn primary" (click)="closeDetalle()">
+            Cerrar
+          </button>
+        </div>
+      </div>
+    </div>
+  }
 
   @if (showForm()) {
     <div class="modal-backdrop">

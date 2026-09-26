@@ -197,6 +197,18 @@ describe('ComparativoPrecioComponent', () => {
     expect(component.page()).toBe(1);
   });
 
+  it('clasePrecio() marca barato cuando los precios están igualados', async () => {
+    fixture.detectChanges();
+    await fixture.whenStable();
+    const fila: ComparativoProducto = {
+      producto_id: 'p8',
+      producto_nombre: 'Aceite',
+      precios: { me1: 5000, me2: 5000 },
+    };
+    expect(component.clasePrecio(fila, 'me1')).toBe('barato');
+    expect(component.clasePrecio(fila, 'me2')).toBe('barato');
+  });
+
   it('filtro por mercado solo muestra productos baratos en ese mercado', async () => {
     const varias: ComparativoProducto[] = [
       {
@@ -226,6 +238,39 @@ describe('ComparativoPrecioComponent', () => {
     expect(component.filasFiltradas().map((f) => f.producto_id)).toEqual([
       'p1',
       'p3',
+    ]);
+  });
+
+  it('filtro por mercado incluye productos igualados con otro mercado', async () => {
+    const varias: ComparativoProducto[] = [
+      {
+        producto_id: 'p1',
+        producto_nombre: 'Leche',
+        precios: { me1: 3000, me2: 2800 },
+      },
+      {
+        producto_id: 'p2',
+        producto_nombre: 'Arroz',
+        precios: { me1: 2000, me2: 2000 },
+      },
+      {
+        producto_id: 'p3',
+        producto_nombre: 'Pan',
+        precios: { me1: 1000, me2: 1500 },
+      },
+    ];
+    comparativoService.listGrouped.and.resolveTo(varias);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    component.onFilterMercadoChange('me1');
+    expect(component.filasFiltradas().map((f) => f.producto_id)).toEqual([
+      'p2',
+      'p3',
+    ]);
+    component.onFilterMercadoChange('me2');
+    expect(component.filasFiltradas().map((f) => f.producto_id)).toEqual([
+      'p1',
+      'p2',
     ]);
   });
 

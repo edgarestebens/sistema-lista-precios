@@ -26,6 +26,7 @@ export class ComparativoPrecioComponent implements OnInit {
   loading = signal(true);
   showForm = signal(false);
   showMenu = signal(false);
+  detalleFila = signal<ComparativoProducto | null>(null);
   saving = signal(false);
   deletingId = signal<string | null>(null);
   editingProductoId = signal<string | null>(null);
@@ -52,7 +53,7 @@ export class ComparativoPrecioComponent implements OnInit {
     const q = this.searchQuery().trim().toLocaleLowerCase('es');
     const mercadoId = this.filterMercadoId();
     return this.filas().filter((f) => {
-      if (mercadoId && this.clasePrecio(f, mercadoId) !== 'barato') {
+      if (mercadoId && !this.esBaratoOIgualado(f, mercadoId)) {
         return false;
       }
       if (!q) return true;
@@ -184,7 +185,7 @@ export class ComparativoPrecioComponent implements OnInit {
     return fila.precios[mercadoId] ?? 0;
   }
 
-  /** 'barato' | 'caro' | null — ignora ceros; un solo precio > 0 cuenta como barato. */
+  /** 'barato' | 'caro' | null — ignora ceros; empates en el mínimo cuentan como barato. */
   clasePrecio(fila: ComparativoProducto, mercadoId: string): string | null {
     const precio = this.precioDe(fila, mercadoId);
     if (precio <= 0) return null;
@@ -193,15 +194,21 @@ export class ComparativoPrecioComponent implements OnInit {
       .map((m) => this.precioDe(fila, m.id))
       .filter((p) => p > 0);
 
+    if (precios.length === 0) return null;
     if (precios.length === 1) return 'barato';
 
     const min = Math.min(...precios);
     const max = Math.max(...precios);
-    if (min === max) return null;
 
+    // Empate total o empatado en el más barato → verde
     if (precio === min) return 'barato';
-    if (precio === max) return 'caro';
+    if (min !== max && precio === max) return 'caro';
     return null;
+  }
+
+  /** Incluye el más barato y los empatados con otro mercado en ese mínimo. */
+  esBaratoOIgualado(fila: ComparativoProducto, mercadoId: string): boolean {
+    return this.clasePrecio(fila, mercadoId) === 'barato';
   }
 
   nombreProductoEditando(): string {
@@ -228,6 +235,7 @@ export class ComparativoPrecioComponent implements OnInit {
       await this.alert.warning('Todos los productos ya tienen comparativo.');
       return;
     }
+    this.closeDetalle();
     this.editingProductoId.set(null);
     this.selectedProductoId = '';
     this.preciosForm = {};
@@ -237,8 +245,18 @@ export class ComparativoPrecioComponent implements OnInit {
     this.showForm.set(true);
   }
 
+  openDetalle(event: Event, fila: ComparativoProducto): void {
+    event.stopPropagation();
+    this.detalleFila.set(fila);
+  }
+
+  closeDetalle(): void {
+    this.detalleFila.set(null);
+  }
+
   openEdit(event: Event, fila: ComparativoProducto): void {
     event.stopPropagation();
+    this.closeDetalle();
     this.editingProductoId.set(fila.producto_id);
     this.selectedProductoId = fila.producto_id;
     this.preciosForm = {};
