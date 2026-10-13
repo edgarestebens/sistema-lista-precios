@@ -95,6 +95,10 @@ export class OfflineDbService {
     await this.db.markets.delete(id);
   }
 
+  async listItems(): Promise<LocalItem[]> {
+    return this.db.items.toArray();
+  }
+
   async listItemsByMarket(marketId: string): Promise<LocalItem[]> {
     const rows = await this.db.items.where('market_id').equals(marketId).toArray();
     return rows.sort((a, b) => {

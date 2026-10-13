@@ -210,16 +210,22 @@ export class GraficosGastosComponent implements OnInit {
     return false;
   }
 
-  /** Del 15 del mes actual al 15 del mes siguiente. */
+  /**
+   * Ciclo del 15 al 14. Antes del día 15 se mantiene el periodo anterior;
+   * desde el 15 empieza el del mes en curso.
+   */
   aplicarRangoPorDefecto(ref: Date = new Date()): void {
-    const y = ref.getFullYear();
-    const month = ref.getMonth();
     const iso = (year: number, m: number, d: number) =>
       `${year}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
 
-    const next = new Date(y, month + 1, 15);
-    this.fechaDesde.set(iso(y, month, 15));
-    this.fechaHasta.set(iso(next.getFullYear(), next.getMonth(), 15));
+    const start =
+      ref.getDate() < 15
+        ? new Date(ref.getFullYear(), ref.getMonth() - 1, 15)
+        : new Date(ref.getFullYear(), ref.getMonth(), 15);
+    const end = new Date(start.getFullYear(), start.getMonth() + 1, 14);
+
+    this.fechaDesde.set(iso(start.getFullYear(), start.getMonth(), 15));
+    this.fechaHasta.set(iso(end.getFullYear(), end.getMonth(), 14));
   }
 
   async load(): Promise<void> {

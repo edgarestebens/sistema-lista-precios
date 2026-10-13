@@ -13,6 +13,11 @@ export class ItemsService {
     private readonly auth: AuthService
   ) {}
 
+  async listAll(): Promise<Item[]> {
+    await this.sync.ensureHydrated();
+    return this.offline.listItems();
+  }
+
   async listByMarket(marketId: string): Promise<Item[]> {
     await this.sync.ensureHydrated();
     const items = await this.offline.listItemsByMarket(marketId);

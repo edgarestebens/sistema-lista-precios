@@ -97,10 +97,16 @@ describe('GraficosGastosComponent', () => {
     expect(component.loading()).toBeFalse();
   });
 
-  it('aplica rango del 15 del mes al 15 del mes siguiente', () => {
+  it('desde el 15 va del 15 de ese mes al 14 del siguiente', () => {
     component.aplicarRangoPorDefecto(new Date(2026, 8, 22));
     expect(component.fechaDesde()).toBe('2026-09-15');
-    expect(component.fechaHasta()).toBe('2026-10-15');
+    expect(component.fechaHasta()).toBe('2026-10-14');
+  });
+
+  it('antes del 15 mantiene el periodo anterior', () => {
+    component.aplicarRangoPorDefecto(new Date(2026, 9, 2));
+    expect(component.fechaDesde()).toBe('2026-09-15');
+    expect(component.fechaHasta()).toBe('2026-10-14');
   });
 
   it('agrega por día en el rango filtrado', async () => {

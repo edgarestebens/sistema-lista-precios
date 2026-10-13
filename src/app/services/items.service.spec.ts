@@ -73,6 +73,11 @@ describe('ItemsService', () => {
     await offline.db.delete();
   });
 
+  it('listAll() devuelve todos los ítems', async () => {
+    const result = await service.listAll();
+    expect(result.map((i) => i.id).sort()).toEqual(['i1', 'i2']);
+  });
+
   it('listByMarket() filtra por market_id y mapea nombre', async () => {
     const result = await service.listByMarket('m1');
     expect(result.map((i) => i.id)).toEqual(['i1', 'i2']);

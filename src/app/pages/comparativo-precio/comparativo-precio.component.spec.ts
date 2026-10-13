@@ -2,14 +2,29 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 import {
   ComparativoProducto,
+  Item,
   Mercado,
   Producto,
 } from '../../models/models';
 import { AlertService } from '../../services/alert.service';
 import { ComparativoPrecioService } from '../../services/comparativo-precio.service';
+import { ItemsService } from '../../services/items.service';
 import { MercadosService } from '../../services/mercados.service';
 import { ProductosService } from '../../services/productos.service';
 import { ComparativoPrecioComponent } from './comparativo-precio.component';
+
+function itemDeLista(productoId: string, isChecked: boolean, index: number): Item {
+  return {
+    id: `i-${productoId}`,
+    market_id: 'm1',
+    producto_id: productoId,
+    nombre: productoId,
+    is_checked: isChecked,
+    position: index,
+    created_at: '2026-01-01T00:00:00Z',
+    updated_at: '2026-01-01T00:00:00Z',
+  };
+}
 
 describe('ComparativoPrecioComponent', () => {
   let fixture: ComponentFixture<ComparativoPrecioComponent>;
@@ -17,6 +32,7 @@ describe('ComparativoPrecioComponent', () => {
   let comparativoService: jasmine.SpyObj<ComparativoPrecioService>;
   let productosService: jasmine.SpyObj<ProductosService>;
   let mercadosService: jasmine.SpyObj<MercadosService>;
+  let itemsService: jasmine.SpyObj<ItemsService>;
   let alertService: jasmine.SpyObj<AlertService>;
 
   const productos: Producto[] = [
@@ -48,6 +64,9 @@ describe('ComparativoPrecioComponent', () => {
     mercadosService = jasmine.createSpyObj<MercadosService>('MercadosService', [
       'list',
     ]);
+    itemsService = jasmine.createSpyObj<ItemsService>('ItemsService', [
+      'listAll',
+    ]);
     alertService = jasmine.createSpyObj<AlertService>('AlertService', [
       'error',
       'warning',
@@ -60,6 +79,7 @@ describe('ComparativoPrecioComponent', () => {
     comparativoService.listGrouped.and.resolveTo(filas);
     productosService.list.and.resolveTo(productos);
     mercadosService.list.and.resolveTo(mercados);
+    itemsService.listAll.and.resolveTo([]);
 
     await TestBed.configureTestingModule({
       imports: [ComparativoPrecioComponent],
@@ -68,6 +88,7 @@ describe('ComparativoPrecioComponent', () => {
         { provide: ComparativoPrecioService, useValue: comparativoService },
         { provide: ProductosService, useValue: productosService },
         { provide: MercadosService, useValue: mercadosService },
+        { provide: ItemsService, useValue: itemsService },
         { provide: AlertService, useValue: alertService },
       ],
     }).compileComponents();
@@ -228,6 +249,11 @@ describe('ComparativoPrecioComponent', () => {
       },
     ];
     comparativoService.listGrouped.and.resolveTo(varias);
+    itemsService.listAll.and.resolveTo([
+      itemDeLista('p1', false, 0),
+      itemDeLista('p2', false, 1),
+      itemDeLista('p3', false, 2),
+    ]);
     fixture.detectChanges();
     await fixture.whenStable();
     component.onFilterMercadoChange('me1');
@@ -260,6 +286,11 @@ describe('ComparativoPrecioComponent', () => {
       },
     ];
     comparativoService.listGrouped.and.resolveTo(varias);
+    itemsService.listAll.and.resolveTo([
+      itemDeLista('p1', false, 0),
+      itemDeLista('p2', false, 1),
+      itemDeLista('p3', false, 2),
+    ]);
     fixture.detectChanges();
     await fixture.whenStable();
     component.onFilterMercadoChange('me1');
@@ -271,6 +302,51 @@ describe('ComparativoPrecioComponent', () => {
     expect(component.filasFiltradas().map((f) => f.producto_id)).toEqual([
       'p1',
       'p2',
+    ]);
+  });
+
+  it('filtro por mercado exige lista pendiente y sin filtro no valida', async () => {
+    const varias: ComparativoProducto[] = [
+      {
+        producto_id: 'p1',
+        producto_nombre: 'Leche',
+        precios: { me1: 2000, me2: 2800 },
+      },
+      {
+        producto_id: 'p2',
+        producto_nombre: 'Arroz',
+        precios: { me1: 1500, me2: 2000 },
+      },
+      {
+        producto_id: 'p3',
+        producto_nombre: 'Pan',
+        precios: { me1: 1000, me2: 1800 },
+      },
+    ];
+    comparativoService.listGrouped.and.resolveTo(varias);
+    itemsService.listAll.and.resolveTo([
+      itemDeLista('p1', false, 0),
+      itemDeLista('p2', true, 1),
+    ]);
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(component.filasFiltradas().map((f) => f.producto_id)).toEqual([
+      'p1',
+      'p2',
+      'p3',
+    ]);
+
+    component.onFilterMercadoChange('me1');
+    expect(component.filasFiltradas().map((f) => f.producto_id)).toEqual([
+      'p1',
+    ]);
+
+    component.onFilterMercadoChange('');
+    expect(component.filasFiltradas().map((f) => f.producto_id)).toEqual([
+      'p1',
+      'p2',
+      'p3',
     ]);
   });
 

@@ -96,16 +96,34 @@ describe('GastosComponent', () => {
     expect(component.loading()).toBeFalse();
   });
 
-  it('aplica rango del 15 del mes al 15 del mes siguiente', () => {
-    component.aplicarRangoPorDefecto(new Date(2026, 8, 10));
+  it('el 17 de septiembre va del 15 de septiembre al 14 de octubre', () => {
+    component.aplicarRangoPorDefecto(new Date(2026, 8, 17));
     expect(component.fechaDesde()).toBe('2026-09-15');
-    expect(component.fechaHasta()).toBe('2026-10-15');
+    expect(component.fechaHasta()).toBe('2026-10-14');
   });
 
-  it('cruza de año cuando el mes es diciembre', () => {
+  it('antes del 15 mantiene el periodo que empezó el mes anterior', () => {
+    component.aplicarRangoPorDefecto(new Date(2026, 9, 2));
+    expect(component.fechaDesde()).toBe('2026-09-15');
+    expect(component.fechaHasta()).toBe('2026-10-14');
+    component.aplicarRangoPorDefecto(new Date(2026, 9, 14));
+    expect(component.fechaDesde()).toBe('2026-09-15');
+    expect(component.fechaHasta()).toBe('2026-10-14');
+  });
+
+  it('desde el 15 abre el periodo del mes en curso', () => {
+    component.aplicarRangoPorDefecto(new Date(2026, 9, 15));
+    expect(component.fechaDesde()).toBe('2026-10-15');
+    expect(component.fechaHasta()).toBe('2026-11-14');
+  });
+
+  it('cruza de año en diciembre y en enero antes del 15', () => {
     component.aplicarRangoPorDefecto(new Date(2026, 11, 22));
     expect(component.fechaDesde()).toBe('2026-12-15');
-    expect(component.fechaHasta()).toBe('2027-01-15');
+    expect(component.fechaHasta()).toBe('2027-01-14');
+    component.aplicarRangoPorDefecto(new Date(2026, 0, 2));
+    expect(component.fechaDesde()).toBe('2025-12-15');
+    expect(component.fechaHasta()).toBe('2026-01-14');
   });
 
   it('muestra conceptos en el template', async () => {

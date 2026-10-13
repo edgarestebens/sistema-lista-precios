@@ -11,12 +11,14 @@ import { Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import {
   ComparativoProducto,
+  Item,
   Mercado,
   Producto,
 } from '../../models/models';
 import { toSpanishError } from '../../core/es-error';
 import { AlertService } from '../../services/alert.service';
 import { ComparativoPrecioService } from '../../services/comparativo-precio.service';
+import { ItemsService } from '../../services/items.service';
 import { MercadosService } from '../../services/mercados.service';
 import { ProductosService } from '../../services/productos.service';
 
@@ -48,6 +50,8 @@ export class ComparativoPrecioComponent implements OnInit {
   pageSize = signal(10);
   searchQuery = signal('');
   filterMercadoId = signal('');
+  /** En alguna lista y sin tachar. Solo se usa al filtrar por mercado. */
+  productosPendientes = signal<Set<string>>(new Set());
   readonly pageSizeOptions = [5, 10, 25];
 
   readonly productosDisponibles = computed(() => {
@@ -62,9 +66,11 @@ export class ComparativoPrecioComponent implements OnInit {
   readonly filasFiltradas = computed(() => {
     const q = this.searchQuery().trim().toLocaleLowerCase('es');
     const mercadoId = this.filterMercadoId();
+    const pendientes = this.productosPendientes();
     return this.filas().filter((f) => {
-      if (mercadoId && !this.esBaratoOIgualado(f, mercadoId)) {
-        return false;
+      if (mercadoId) {
+        if (!this.esBaratoOIgualado(f, mercadoId)) return false;
+        if (!pendientes.has(f.producto_id)) return false;
       }
       if (!q) return true;
       return f.producto_nombre.toLocaleLowerCase('es').includes(q);
@@ -114,6 +120,7 @@ export class ComparativoPrecioComponent implements OnInit {
     private comparativoService: ComparativoPrecioService,
     private productosService: ProductosService,
     private mercadosService: MercadosService,
+    private itemsService: ItemsService,
     private alert: AlertService,
     private router: Router
   ) {
@@ -160,14 +167,16 @@ export class ComparativoPrecioComponent implements OnInit {
   async load(): Promise<void> {
     this.loading.set(true);
     try {
-      const [filas, productos, mercados] = await Promise.all([
+      const [filas, productos, mercados, items] = await Promise.all([
         this.comparativoService.listGrouped(),
         this.productosService.list(),
         this.mercadosService.list(),
+        this.itemsService.listAll(),
       ]);
       this.filas.set(filas);
       this.productos.set(productos);
       this.mercados.set(mercados);
+      this.productosPendientes.set(this.idsPendientes(items));
       this.clampPage();
     } catch (e) {
       await this.alert.error(toSpanishError(e, 'Error al cargar'));
@@ -240,6 +249,15 @@ export class ComparativoPrecioComponent implements OnInit {
   /** Incluye el más barato y los empatados con otro mercado en ese mínimo. */
   esBaratoOIgualado(fila: ComparativoProducto, mercadoId: string): boolean {
     return this.clasePrecio(fila, mercadoId) === 'barato';
+  }
+
+  /** Agregado a una lista y con al menos una aparición sin tachar. */
+  private idsPendientes(items: Item[]): Set<string> {
+    const ids = new Set<string>();
+    for (const item of items) {
+      if (!item.is_checked) ids.add(item.producto_id);
+    }
+    return ids;
   }
 
   nombreProductoEditando(): string {
