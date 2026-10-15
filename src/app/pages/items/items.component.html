@@ -35,7 +35,7 @@
     <p class="muted empty">Sin ítems. Elige un producto abajo para agregar.</p>
   } @else {
     <div class="list-toolbar">
-      <div class="select-all" (click)="toggleAll()">
+      <div class="select-all">
         <button
           type="button"
           class="check"
@@ -44,6 +44,7 @@
           [attr.aria-checked]="allChecked()"
           role="checkbox"
           aria-label="Seleccionar todo"
+          (click)="toggleAll()"
         >
           @if (allChecked()) {
             <svg viewBox="0 0 24 24" aria-hidden="true">
