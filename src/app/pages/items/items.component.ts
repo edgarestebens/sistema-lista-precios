@@ -36,10 +36,23 @@ export class ItemsComponent implements OnInit {
   editingItem = signal<Item | null>(null);
   formName = '';
   saving = signal(false);
+  searchQuery = signal('');
   private marketId = '';
 
   readonly allChecked = computed(
     () => this.items().length > 0 && this.items().every((i) => i.is_checked)
+  );
+
+  readonly itemsFiltrados = computed(() => {
+    const q = this.searchQuery().trim().toLocaleLowerCase('es');
+    if (!q) return this.items();
+    return this.items().filter((i) =>
+      i.nombre.toLocaleLowerCase('es').includes(q)
+    );
+  });
+
+  readonly buscando = computed(
+    () => this.searchQuery().trim().length > 0
   );
 
   /** Productos de esta lista que aún no están agregados. */
@@ -103,6 +116,10 @@ export class ItemsComponent implements OnInit {
     return best.mercado_nombre
       ? `${best.mercado_nombre} · ${precio}`
       : precio;
+  }
+
+  onSearchChange(value: string): void {
+    this.searchQuery.set(value);
   }
 
   async addItem(): Promise<void> {
@@ -262,7 +279,7 @@ export class ItemsComponent implements OnInit {
   }
 
   async drop(event: CdkDragDrop<Item[]>): Promise<void> {
-    if (event.previousIndex === event.currentIndex) return;
+    if (this.buscando() || event.previousIndex === event.currentIndex) return;
     const list = [...this.items()];
     moveItemInArray(list, event.previousIndex, event.currentIndex);
     this.items.set(list);

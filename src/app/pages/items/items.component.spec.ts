@@ -335,6 +335,17 @@ describe('ItemsComponent', () => {
     expect(component.productosDisponibles().map((p) => p.id)).toEqual(['p3']);
   });
 
+  it('onSearchChange() filtra ítems por nombre', async () => {
+    fixture.detectChanges();
+    await fixture.whenStable();
+    component.onSearchChange('lec');
+    expect(component.itemsFiltrados().map((i) => i.nombre)).toEqual(['Leche']);
+    expect(component.buscando()).toBeTrue();
+    component.onSearchChange('');
+    expect(component.itemsFiltrados().length).toBe(2);
+    expect(component.buscando()).toBeFalse();
+  });
+
   it('muestra Seleccionar todo en el template', async () => {
     fixture.detectChanges();
     await fixture.whenStable();
